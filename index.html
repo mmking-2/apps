@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ENGLOG">
 <meta name="theme-color" content="#f2efe7">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <title>ENGLOG — 英語学習ログ</title>
 <style>
   :root {
@@ -89,6 +91,11 @@
   .bcol.today { background: var(--acc); }
   .barlabels { display: flex; gap: 6px; margin-top: 4px; }
   .barlabels span { flex: 1; text-align: center; font-size: 9px; color: var(--muted); font-weight: 700; }
+  .pgrid { display: flex; gap: 6px; align-items: flex-end; padding-top: 8px; }
+  .pgcol { flex: 1; display: flex; flex-direction: column-reverse; gap: 2px; }
+  .pgcell { height: 13px; border-radius: 3px; background: var(--card); border: 1.2px dashed var(--line); }
+  .pgcell.f { background: var(--bar-data); border: none; }
+  .pgcol.today .pgcell.f { background: var(--acc); }
 
   .dots { display: flex; gap: 7px; margin-bottom: 18px; }
   .dot { flex: 1; aspect-ratio: 0.82; border-radius: 11px; background: var(--card);
@@ -200,7 +207,7 @@
     <div class="hero">
       <div class="k">今日の勉強時間</div>
       <div class="num" id="today-total">0:00<small> ｜ 今週 0:00</small></div>
-      <div class="bars" id="week-bars"></div>
+      <div class="pgrid" id="week-bars"></div>
       <div class="barlabels"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>
     </div>
     <div class="dots" id="week-dots"></div>
@@ -226,7 +233,8 @@
     </div>
     <p class="tmini" id="timer-note">25分たつと自動でログに追加され、5分休憩に入ります</p>
     <div style="flex:1"></div>
-    <button class="btn" id="timer-btn" onclick="timerAction()">スタート</button>
+    <button class="btn" id="timer-btn" onclick="primaryAction()">スタート</button>
+    <button class="btn ghost small" id="timer-btn2" style="margin-top:8px" onclick="stopAction()" hidden>中断する</button>
   </section>
 
   <!-- 履歴 -->
@@ -303,11 +311,13 @@ function renderHome() {
   const weekTotal = secs.reduce((a, b) => a + b, 0);
   document.getElementById("today-total").innerHTML =
     `${fmtH(secByDate(today()))}<small> ｜ 今週 ${fmtH(weekTotal)}</small>`;
-  const max = Math.max(...secs, 1);
+  const pomos = wk.map(d => logs().filter(x => x.d === dstr(d) && x.sec >= WORK).length);
+  const rows = Math.max(6, ...pomos);
   document.getElementById("week-bars").innerHTML = wk.map((d, i) => {
-    const h = secs[i] > 0 ? Math.max(10, Math.round(secs[i]/max*100)) : 4;
-    const cls = dstr(d) === today() ? "bcol today" : secs[i] > 0 ? "bcol data" : "bcol";
-    return `<div class="${cls}" style="height:${h}%"></div>`;
+    const isT = dstr(d) === today();
+    let cells = "";
+    for (let r = 0; r < rows; r++) cells += `<div class="pgcell${r < pomos[i] ? " f" : ""}"></div>`;
+    return `<div class="pgcol${isT ? " today" : ""}">${cells}</div>`;
   }).join("");
   document.getElementById("week-dots").innerHTML = wk.map(d => {
     const ds = dstr(d), isToday = ds === today(), done = secByDate(ds) > 0;
@@ -350,25 +360,40 @@ function addTag() {
   selTag = name.trim();
   renderTimerScreen();
 }
-function timerAction() {
+function remainingSec(t) {
+  return t.paused ? t.remaining : Math.max(0, (t.endTs - Date.now()) / 1000);
+}
+function primaryAction() {
   const t = timerState();
   if (!t) {
     store(LS_TIMER, { mode: "work", tag: selTag, endTs: Date.now() + WORK*1000, total: WORK });
   } else if (t.mode === "work") {
-    const remaining = Math.max(0, (t.endTs - Date.now()) / 1000);
-    const elapsed = t.total - remaining;
-    if (elapsed >= 60) {
-      if (confirm(`ここまでの ${fmtMin(elapsed)} を記録して終了しますか？\n（キャンセル＝記録せず破棄）`)) addLog(t.tag, elapsed);
+    if (t.paused) {
+      t.endTs = Date.now() + t.remaining * 1000;
+      delete t.paused; delete t.remaining;
+    } else {
+      t.paused = true;
+      t.remaining = Math.max(0, (t.endTs - Date.now()) / 1000);
     }
-    localStorage.removeItem(LS_TIMER);
+    store(LS_TIMER, t);
   } else {
     localStorage.removeItem(LS_TIMER); // 休憩スキップ
   }
   paintTimer(); renderPlaybar();
 }
+function stopAction() {
+  const t = timerState();
+  if (!t || t.mode !== "work") return;
+  const elapsed = t.total - remainingSec(t);
+  if (elapsed >= 60) {
+    if (confirm(`ここまでの ${fmtMin(elapsed)} を記録して終了しますか？\n（キャンセル＝記録せず破棄）`)) addLog(t.tag, elapsed);
+  }
+  localStorage.removeItem(LS_TIMER);
+  paintTimer(); renderPlaybar();
+}
 function tick() {
   const t = timerState();
-  if (t && Date.now() >= t.endTs) {
+  if (t && !t.paused && Date.now() >= t.endTs) {
     if (t.mode === "work") {
       addLog(t.tag, t.total);
       store(LS_TIMER, { mode: "break", tag: t.tag, endTs: Date.now() + BREAK*1000, total: BREAK });
@@ -388,11 +413,13 @@ function paintTimer() {
   const timeEl = document.getElementById("ring-time");
   const labEl = document.getElementById("ring-label");
   const btn = document.getElementById("timer-btn");
+  const btn2 = document.getElementById("timer-btn2");
   const note = document.getElementById("timer-note");
   const inEl = document.querySelector("#scr-timer .ringin");
   const isBrk = !!t && t.mode === "break";
   inEl.classList.toggle("brk", isBrk);
   btn.classList.toggle("brkskip", isBrk);
+  btn2.hidden = !(t && t.mode === "work");
   if (!t) {
     ring.style.background = `conic-gradient(var(--steel) 0 0%, var(--bar) 0% 100%)`;
     timeEl.textContent = "25:00";
@@ -400,15 +427,17 @@ function paintTimer() {
     btn.textContent = "スタート";
     note.textContent = "25分たつと自動でログに追加され、5分休憩に入ります";
   } else {
-    const remaining = Math.max(0, (t.endTs - Date.now()) / 1000);
+    const remaining = remainingSec(t);
     const frac = Math.min(100, (1 - remaining / t.total) * 100);
     const arc = isBrk ? "var(--brk-arc)" : "var(--steel)";
     ring.style.background = `conic-gradient(${arc} 0 ${frac}%, var(--bar) ${frac}% 100%)`;
     timeEl.textContent = fmtM(remaining);
     if (t.mode === "work") {
-      labEl.textContent = `${pomosToday()+1}ポモ目 / ${t.tag}`;
-      btn.textContent = "中断する";
-      note.textContent = "ホームに戻ってもタイマーは動き続けます";
+      labEl.textContent = t.paused ? `⏸ 一時停止中 / ${t.tag}` : `${pomosToday()+1}ポモ目 / ${t.tag}`;
+      btn.textContent = t.paused ? "▶ 再開する" : "⏸ 一時停止";
+      note.textContent = t.paused
+        ? "カウントは止まっています。トイレ休憩どうぞ☕"
+        : "ホームに戻ってもタイマーは動き続けます";
     } else {
       labEl.textContent = "☕ 休憩中";
       btn.textContent = "休憩をスキップ";
@@ -424,8 +453,10 @@ function renderPlaybar() {
   pb.classList.toggle("brk", !!t && t.mode === "break");
   if (!t) { tx.textContent = "25:00 ポモドーロ"; sub.textContent = `タグ: ${selTag}`; }
   else {
-    const remaining = Math.max(0, (t.endTs - Date.now()) / 1000);
-    tx.textContent = t.mode === "work" ? `${fmtM(remaining)} 実行中` : `${fmtM(remaining)} 休憩中`;
+    const remaining = remainingSec(t);
+    tx.textContent = t.mode === "work"
+      ? `${fmtM(remaining)} ${t.paused ? "一時停止中" : "実行中"}`
+      : `${fmtM(remaining)} 休憩中`;
     sub.textContent = t.mode === "work" ? t.tag : "";
   }
 }
