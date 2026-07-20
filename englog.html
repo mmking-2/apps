@@ -26,6 +26,25 @@
     --danger: #a63a35;
     --brk: #4a9d6b;
     --brk-arc: #8fcaa6;
+    --acc: #1c3a68;
+    --acc-ink: #f2efe7;
+    --numc: #1c3a68;
+    --today-bg: #6491bd;
+    --today-ink: #ffffff;
+  }
+  :root[data-theme="cyan"] {
+    --bg: #2ab5cb; --card: #4cc4d7; --line: #1a97ab; --ink: #10282d; --muted: #145a66;
+    --steel: #10282d; --bar: #1a97ab; --bar-data: #7fd2df;
+    --cal1: #1f95a8; --cal2: #136378; --cal3: #10282d;
+    --acc: #f5e7c4; --acc-ink: #10282d; --numc: #10282d;
+    --today-bg: #10282d; --today-ink: #f5e7c4;
+  }
+  :root[data-theme="kimori"] {
+    --bg: #9bd167; --card: #f5faec; --line: #cfe3b4; --ink: #1d3a10; --muted: #4f7040;
+    --steel: #c0392b; --bar: #cfe3b4; --bar-data: #c9e6a8;
+    --cal1: #c2e29b; --cal2: #6fae3f; --cal3: #234c15;
+    --acc: #c0392b; --acc-ink: #fff8f4; --numc: #1d3a10;
+    --today-bg: #234c15; --today-ink: #f5faec;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -45,11 +64,11 @@
   .logo { letter-spacing: 0.06em; }
 
   .appbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .appbar .logo { font-size: 20px; color: var(--navy); }
+  .appbar .logo { font-size: 20px; color: var(--numc); }
   .appbar .sp { flex: 1; }
   .iconbtn {
     width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid var(--line);
-    background: var(--card); color: var(--navy); font-size: 16px; cursor: pointer;
+    background: var(--card); color: var(--numc); font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
   .backbtn { background: none; border: none; color: var(--ink); font-size: 22px; font-weight: 800;
@@ -62,12 +81,12 @@
   .hero { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px;
     padding: 14px 16px; margin-bottom: 14px; }
   .hero .k { font-size: 11px; color: var(--muted); font-weight: 700; }
-  .hero .num { font-size: 32px; color: var(--navy); line-height: 1.2; }
+  .hero .num { font-size: 32px; color: var(--numc); line-height: 1.2; }
   .hero .num small { font-size: 13px; font-family: "Hiragino Sans", sans-serif; font-weight: 700; color: var(--muted); }
   .bars { display: flex; gap: 6px; align-items: flex-end; height: 64px; padding-top: 8px; }
   .bcol { flex: 1; border-radius: 5px 5px 0 0; background: var(--bar); min-height: 4px; }
   .bcol.data { background: var(--bar-data); }
-  .bcol.today { background: var(--navy); }
+  .bcol.today { background: var(--acc); }
   .barlabels { display: flex; gap: 6px; margin-top: 4px; }
   .barlabels span { flex: 1; text-align: center; font-size: 9px; color: var(--muted); font-weight: 700; }
 
@@ -77,9 +96,9 @@
     align-items: center; justify-content: center; gap: 2px; }
   .dot .d1 { font-size: 9.5px; color: var(--muted); font-weight: 700; }
   .dot .d2 { font-size: 12px; font-weight: 800; }
-  .dot.done { background: var(--navy); border-color: var(--navy); color: var(--bg); }
+  .dot.done { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
   .dot.done .d1 { color: inherit; opacity: 0.65; }
-  .dot.today { background: var(--steel); border-color: var(--steel); color: #fff; }
+  .dot.today { background: var(--today-bg); border-color: var(--today-bg); color: var(--today-ink); }
   .dot.today .d1 { color: inherit; opacity: 0.75; }
 
   h2.sect { font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.04em; }
@@ -87,18 +106,18 @@
     padding: 12px 15px; margin-bottom: 7px; display: flex; align-items: center; gap: 8px; }
   .logrow .nm { font-size: 14px; font-weight: 800; }
   .logrow .ct { font-size: 11px; color: var(--muted); font-weight: 600; }
-  .logrow .num { font-size: 15px; color: var(--navy); margin-left: auto; }
+  .logrow .num { font-size: 15px; color: var(--numc); margin-left: auto; }
   .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px 0; line-height: 1.8; }
 
   .playbar {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     width: calc(100% - 40px); max-width: 400px; height: 56px; border: none; cursor: pointer;
-    background: var(--navy); color: var(--bg); border-radius: 16px; z-index: 5;
+    background: var(--acc); color: var(--acc-ink); border-radius: 16px; z-index: 5;
     display: flex; align-items: center; padding: 0 16px; gap: 12px;
-    box-shadow: 0 6px 18px rgba(28,58,104,0.35);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
     font-family: inherit;
   }
-  .playbar .pl { width: 28px; height: 28px; border-radius: 50%; background: var(--bg); color: var(--navy);
+  .playbar .pl { width: 28px; height: 28px; border-radius: 50%; background: var(--acc-ink); color: var(--acc);
     display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex-shrink: 0; }
   .playbar .tx { font-size: 14px; font-weight: 800; }
   .playbar .sub { font-size: 11px; opacity: 0.75; margin-left: auto; font-weight: 600; }
@@ -109,22 +128,22 @@
   .chipline { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; margin: 8px 0 6px; }
   .chip { font-size: 12px; font-weight: 700; border: 1.5px solid var(--line); background: var(--card);
     border-radius: 999px; padding: 7px 16px; color: var(--muted); cursor: pointer; font-family: inherit; }
-  .chip.on { background: var(--navy); border-color: var(--navy); color: var(--bg); }
+  .chip.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
   .ringwrap { margin: 26px auto 10px; width: 240px; height: 240px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     background: conic-gradient(var(--steel) 0 0%, var(--bar) 0% 100%); }
-  .ringin { width: 196px; height: 196px; border-radius: 50%; background: var(--navy);
+  .ringin { width: 196px; height: 196px; border-radius: 50%; background: var(--acc);
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     box-shadow: inset 0 0 0 5px var(--bg); }
-  .ringin .tm { font-size: 46px; color: var(--bg); font-family: "Futura", "Avenir Next", sans-serif; font-weight: 700; letter-spacing: 0.03em; }
-  .ringin .lb { font-size: 11px; color: var(--steel); font-weight: 800; }
+  .ringin .tm { font-size: 46px; color: var(--acc-ink); font-family: "Futura", "Avenir Next", sans-serif; font-weight: 700; letter-spacing: 0.03em; }
+  .ringin .lb { font-size: 11px; color: var(--acc-ink); opacity: 0.8; font-weight: 800; }
   .ringin.brk { background: var(--brk); }
   .ringin.brk .lb { color: #e2f2e6; }
-  .btn.brkskip { background: var(--brk); }
+  .btn.brkskip { background: var(--brk); color: #ffffff; }
   .tmini { font-size: 12px; color: var(--muted); text-align: center; font-weight: 600; margin-top: 8px; line-height: 1.7; }
   .btn {
     width: 100%; height: 52px; border-radius: 14px; border: none; cursor: pointer;
-    background: var(--navy); color: var(--bg); font-size: 16px; font-weight: 800;
+    background: var(--acc); color: var(--acc-ink); font-size: 16px; font-weight: 800;
     font-family: inherit; margin-top: 12px;
   }
   .btn.ghost { background: none; border: 1.5px solid var(--line); color: var(--ink); }
@@ -132,7 +151,7 @@
   .btn.danger { background: none; border: 1.5px solid var(--line); color: var(--danger); }
 
   /* ==== history ==== */
-  .seg { display: flex; background: #e6e1d4; border-radius: 12px; padding: 3px; margin-bottom: 12px; }
+  .seg { display: flex; background: var(--line); border-radius: 12px; padding: 3px; margin-bottom: 12px; }
   .seg button { flex: 1; text-align: center; font-size: 13px; font-weight: 800; padding: 8px 0;
     border-radius: 10px; color: var(--muted); border: none; background: none; cursor: pointer; font-family: inherit; }
   .seg button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
@@ -141,11 +160,11 @@
   .mnav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .mnav .m { font-size: 15px; font-weight: 900; }
   .mnav button { background: var(--card); border: 1.5px solid var(--line); border-radius: 10px;
-    width: 34px; height: 34px; font-size: 12px; color: var(--navy); font-weight: 900; cursor: pointer; }
+    width: 34px; height: 34px; font-size: 12px; color: var(--numc); font-weight: 900; cursor: pointer; }
   .stats { display: flex; gap: 10px; margin-bottom: 12px; }
   .stat { flex: 1; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px; padding: 10px 13px; }
   .stat .k { font-size: 10px; color: var(--muted); font-weight: 700; }
-  .stat .num { font-size: 22px; color: var(--navy); }
+  .stat .num { font-size: 22px; color: var(--numc); }
   .stat .num small { font-size: 11px; color: var(--muted); font-family: "Hiragino Sans", sans-serif; font-weight: 700; }
   .calhead { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; }
   .calhead span { text-align: center; font-size: 9px; color: var(--muted); font-weight: 700; }
@@ -162,7 +181,7 @@
   .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
   .datehd { font-size: 11.5px; color: var(--muted); font-weight: 800; margin: 14px 0 6px; }
   .tagbar-outer { flex: 1; height: 7px; border-radius: 4px; background: #e6e1d4; margin: 0 10px; overflow: hidden; }
-  .tagbar-in { height: 100%; background: var(--navy); border-radius: 4px; }
+  .tagbar-in { height: 100%; background: var(--acc); border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -173,6 +192,7 @@
     <div class="appbar">
       <span class="logo">ENGLOG</span>
       <span class="sp"></span>
+      <button class="iconbtn" onclick="cycleTheme()" aria-label="テーマ切り替え">🎨</button>
       <button class="iconbtn" onclick="nav('history')" aria-label="履歴">▤</button>
     </div>
     <div class="datebar" id="home-date"></div>
@@ -443,7 +463,7 @@ function histWeekHTML() {
   let html = `<div class="card2">
     <div class="mnav">
       <button onclick="histWeekOff--;renderHistory()">◀</button>
-      <span class="m">${label}<span style="font-size:12px;color:var(--muted)">　合計 </span><span class="num" style="font-size:16px;color:var(--navy)">${fmtH(total)}</span></span>
+      <span class="m">${label}<span style="font-size:12px;color:var(--muted)">　合計 </span><span class="num" style="font-size:16px;color:var(--numc)">${fmtH(total)}</span></span>
       <button onclick="if(histWeekOff<0){histWeekOff++;renderHistory()}">▶</button>
     </div>
     <div class="bars" style="height:72px">` +
@@ -559,7 +579,28 @@ function wipe() {
   }
 }
 
+/* ===== theme ===== */
+const THEMES = ["panda", "cyan", "kimori"];
+const THEME_INFO = {
+  panda:  { label: "パンダクロノ（グレージュ×ネイビー）", color: "#f2efe7" },
+  cyan:   { label: "シアン（ギラティナ）",                 color: "#2ab5cb" },
+  kimori: { label: "キモリ（黄緑×レンガ赤）",             color: "#9bd167" },
+};
+function applyTheme(t) {
+  if (t === "panda") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.dataset.theme = t;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = THEME_INFO[t].color;
+  store("englog_theme", t);
+}
+function cycleTheme() {
+  const cur = load("englog_theme", "panda");
+  const next = THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length];
+  applyTheme(next);
+}
+
 /* ===== boot ===== */
+applyTheme(THEMES.includes(load("englog_theme", "panda")) ? load("englog_theme", "panda") : "panda");
 setInterval(tick, 500);
 nav("home");
 </script>
