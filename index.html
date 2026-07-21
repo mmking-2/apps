@@ -189,6 +189,28 @@
   .datehd { font-size: 11.5px; color: var(--muted); font-weight: 800; margin: 14px 0 6px; }
   .tagbar-outer { flex: 1; height: 7px; border-radius: 4px; background: #e6e1d4; margin: 0 10px; overflow: hidden; }
   .tagbar-in { height: 100%; background: var(--acc); border-radius: 4px; }
+
+  /* ==== desktop / tablet dashboard (>=900px) ==== */
+  @media (min-width: 900px) {
+    body { align-items: flex-start; }
+    #app {
+      max-width: 1080px; display: grid;
+      grid-template-columns: 1.05fr 0.95fr; padding: 0;
+    }
+    #scr-home, #scr-timer {
+      display: flex !important; min-height: 100dvh; padding: 30px 32px;
+    }
+    #scr-home { border-right: 1.5px solid var(--line); }
+    #scr-timer { align-items: stretch; justify-content: flex-start; }
+    #scr-timer .backbtn { display: none; }
+    #scr-timer .ringwrap { margin-top: 20px; }
+    .playbar { display: none !important; }
+    #scr-history.on {
+      position: fixed; inset: 0; z-index: 30; background: var(--bg);
+      overflow-y: auto; padding: 32px 20px; align-items: center;
+    }
+    #scr-history.on > * { width: 100%; max-width: 660px; }
+  }
 </style>
 </head>
 <body>
@@ -407,7 +429,7 @@ function tick() {
   paintTimer(); renderPlaybar();
 }
 function paintTimer() {
-  if (!document.getElementById("scr-timer").classList.contains("on")) return;
+  if (document.getElementById("scr-timer").offsetParent === null) return;
   const t = timerState();
   const ring = document.getElementById("ring");
   const timeEl = document.getElementById("ring-time");
@@ -634,6 +656,7 @@ function cycleTheme() {
 applyTheme(THEMES.includes(load("englog_theme", "panda")) ? load("englog_theme", "panda") : "panda");
 setInterval(tick, 500);
 nav("home");
+renderTimerScreen();
 </script>
 </body>
 </html>
