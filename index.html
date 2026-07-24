@@ -194,16 +194,20 @@
   @media (min-width: 900px) {
     body { align-items: flex-start; }
     #app {
-      max-width: 1080px; display: grid;
+      max-width: none; width: 100%; display: grid;
       grid-template-columns: 1.05fr 0.95fr; padding: 0;
     }
     #scr-home, #scr-timer {
-      display: flex !important; min-height: 100dvh; padding: 30px 32px;
+      display: flex !important; min-height: 100dvh; padding: 34px 5vw;
     }
     #scr-home { border-right: 1.5px solid var(--line); }
+    #scr-home > *, #scr-timer > * { width: 100%; max-width: 720px; margin-left: auto; margin-right: auto; }
     #scr-timer { align-items: stretch; justify-content: flex-start; }
     #scr-timer .backbtn { display: none; }
-    #scr-timer .ringwrap { margin-top: 20px; }
+    #scr-timer .ringwrap { width: 300px; height: 300px; margin: 26px auto 14px; }
+    #scr-timer .ringin { width: 244px; height: 244px; }
+    #scr-timer .ringin .tm { font-size: 56px; }
+    #scr-timer .ringin .lb { font-size: 13px; }
     .playbar { display: none !important; }
     #scr-history.on {
       position: fixed; inset: 0; z-index: 30; background: var(--bg);
@@ -657,6 +661,13 @@ applyTheme(THEMES.includes(load("englog_theme", "panda")) ? load("englog_theme",
 setInterval(tick, 500);
 nav("home");
 renderTimerScreen();
+
+/* ===== service worker (offline対応) ===== */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
