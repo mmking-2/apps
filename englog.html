@@ -147,6 +147,8 @@
   .ringin.brk { background: var(--brk); }
   .ringin.brk .lb { color: #e2f2e6; }
   .btn.brkskip { background: var(--brk); color: #ffffff; }
+  .mascot { display: flex; align-items: center; justify-content: center; height: 96px; margin: 4px 0 2px; }
+  .mascot svg { height: 92px; width: auto; }
   .tmini { font-size: 12px; color: var(--muted); text-align: center; font-weight: 600; margin-top: 8px; line-height: 1.7; }
   .btn {
     width: 100%; height: 52px; border-radius: 14px; border: none; cursor: pointer;
@@ -257,6 +259,7 @@
         <span class="lb" id="ring-label">きょう 0ポモ</span>
       </div>
     </div>
+    <div class="mascot" id="mascot"></div>
     <p class="tmini" id="timer-note">25分たつと自動でログに追加され、5分休憩に入ります</p>
     <div style="flex:1"></div>
     <button class="btn" id="timer-btn" onclick="primaryAction()">スタート</button>
@@ -278,6 +281,7 @@
     <div style="flex:1"></div>
     <button class="btn ghost small" onclick="exportData()">データを書き出す（コピー）</button>
     <button class="btn ghost small" style="margin-top:8px" onclick="importData()">データを読み込む（貼り付け）</button>
+    <button class="btn ghost small" style="margin-top:8px" onclick="restoreBackup()">バックアップから復元</button>
     <button class="btn danger small" style="margin-top:8px" onclick="wipe()">全データを削除</button>
   </section>
 
@@ -285,7 +289,7 @@
 
 <script>
 "use strict";
-const LS_LOGS = "englog_logs", LS_TAGS = "englog_tags", LS_TIMER = "englog_timer";
+const LS_LOGS = "englog_logs", LS_TAGS = "englog_tags", LS_TIMER = "englog_timer", LS_BAK = "englog_backup";
 const WORK = 25 * 60, BREAK = 5 * 60;
 const YOBI = ["日","月","火","水","木","金","土"];
 
@@ -315,6 +319,10 @@ function addLog(tag, sec) {
   const all = logs();
   all.push({ d: today(), tag, sec: Math.round(sec) });
   store(LS_LOGS, all);
+  backup();
+}
+function backup() {
+  try { store(LS_BAK, { logs: logs(), tags: tags(), ts: Date.now() }); } catch {}
 }
 
 /* ===== nav ===== */
@@ -432,6 +440,45 @@ function tick() {
   }
   paintTimer(); renderPlaybar();
 }
+function mascotSVG(state) {
+  const body = `
+    <path d="M92 70 q26 0 30 20 q-1 8 -9 6 q3 -14 -13 -14 z" fill="#3f8f2e"/>
+    <ellipse cx="60" cy="66" rx="34" ry="28" fill="#74c144"/>
+    <ellipse cx="60" cy="72" rx="13" ry="18" fill="#e0483a"/>
+    <path d="M30 62 q-12 4 -13 14" stroke="#5aa62e" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M90 62 q12 4 13 14" stroke="#5aa62e" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <ellipse cx="60" cy="36" rx="30" ry="26" fill="#7cc84a"/>`;
+  let face;
+  if (state === "break") {
+    face = `
+      <path d="M42 34 q6 6 13 0" stroke="#243b12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M65 34 q6 6 13 0" stroke="#243b12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M56 48 q4 3 8 0" stroke="#3f7a24" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <text x="90" y="26" font-size="15" fill="#3f7a24" font-weight="700">z</text>
+      <text x="99" y="15" font-size="10" fill="#5aa62e" font-weight="700">z</text>`;
+  } else if (state === "work") {
+    face = `
+      <circle cx="48" cy="35" r="10.5" fill="#fff"/><circle cx="72" cy="35" r="10.5" fill="#fff"/>
+      <circle cx="49" cy="36" r="6" fill="#f2a41f"/><circle cx="71" cy="36" r="6" fill="#f2a41f"/>
+      <circle cx="50" cy="37" r="3" fill="#243b12"/><circle cx="70" cy="37" r="3" fill="#243b12"/>
+      <path d="M40 24 l14 4" stroke="#3f7a24" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M80 24 l-14 4" stroke="#3f7a24" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M55 48 l10 0" stroke="#3f7a24" stroke-width="2.6" stroke-linecap="round"/>`;
+  } else if (state === "paused") {
+    face = `
+      <circle cx="48" cy="34" r="10.5" fill="#fff"/><circle cx="72" cy="34" r="10.5" fill="#fff"/>
+      <circle cx="51" cy="35" r="5.5" fill="#f2a41f"/><circle cx="75" cy="35" r="5.5" fill="#f2a41f"/>
+      <circle cx="52" cy="36" r="2.6" fill="#243b12"/><circle cx="76" cy="36" r="2.6" fill="#243b12"/>
+      <path d="M54 48 q6 4 12 0" stroke="#3f7a24" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  } else {
+    face = `
+      <circle cx="48" cy="34" r="11" fill="#fff"/><circle cx="72" cy="34" r="11" fill="#fff"/>
+      <circle cx="49" cy="35" r="6.5" fill="#f2a41f"/><circle cx="71" cy="35" r="6.5" fill="#f2a41f"/>
+      <circle cx="50" cy="36" r="3" fill="#243b12"/><circle cx="70" cy="36" r="3" fill="#243b12"/>
+      <path d="M54 48 q6 5 12 0" stroke="#3f7a24" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  }
+  return `<svg viewBox="0 0 130 100" xmlns="http://www.w3.org/2000/svg">${body}${face}</svg>`;
+}
 function paintTimer() {
   if (document.getElementById("scr-timer").offsetParent === null) return;
   const t = timerState();
@@ -446,6 +493,11 @@ function paintTimer() {
   inEl.classList.toggle("brk", isBrk);
   btn.classList.toggle("brkskip", isBrk);
   btn2.hidden = !(t && t.mode === "work");
+  const mascotEl = document.getElementById("mascot");
+  if (mascotEl) {
+    const mst = !t ? "idle" : (t.mode === "break" ? "break" : (t.paused ? "paused" : "work"));
+    mascotEl.innerHTML = mascotSVG(mst);
+  }
   if (!t) {
     ring.style.background = `conic-gradient(var(--steel) 0 0%, var(--bar) 0% 100%)`;
     timeEl.textContent = "25:00";
@@ -621,6 +673,7 @@ function importData() {
     if (!confirm(`記録 ${d.logs.length}件 を取り込みます。\nこの端末の今のデータは置き換えられます。よろしいですか？`)) return;
     store(LS_LOGS, d.logs);
     store(LS_TAGS, Array.isArray(d.tags) && d.tags.length ? d.tags : ["単語","リスニング","文法"]);
+    backup();
     selTag = tags()[0];
     renderHistory();
     alert("読み込みました");
@@ -629,11 +682,26 @@ function importData() {
   }
 }
 function wipe() {
-  if (confirm("すべての記録とタグを削除します。よろしいですか？")) {
+  if (confirm("すべての記録とタグを削除します。\n（自動バックアップは残るので「バックアップから復元」で戻せます）\nよろしいですか？")) {
     localStorage.removeItem(LS_LOGS); localStorage.removeItem(LS_TAGS); localStorage.removeItem(LS_TIMER);
     selTag = tags()[0];
     nav("home");
   }
+}
+function restoreBackup() {
+  const b = load(LS_BAK, null);
+  if (!b || !Array.isArray(b.logs) || b.logs.length === 0) {
+    alert("復元できるバックアップがまだありません。");
+    return;
+  }
+  const w = new Date(b.ts || Date.now());
+  const ws = `${w.getMonth()+1}/${w.getDate()} ${String(w.getHours()).padStart(2,"0")}:${String(w.getMinutes()).padStart(2,"0")}`;
+  if (!confirm(`自動バックアップ（${ws}時点・記録${b.logs.length}件）から復元します。\n今のデータは置き換えられます。よろしいですか？`)) return;
+  store(LS_LOGS, b.logs);
+  store(LS_TAGS, Array.isArray(b.tags) && b.tags.length ? b.tags : ["単語","リスニング","文法"]);
+  selTag = tags()[0];
+  renderHistory();
+  alert("復元しました");
 }
 
 /* ===== theme ===== */
