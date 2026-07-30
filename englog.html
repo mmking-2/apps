@@ -149,6 +149,16 @@
   .btn.brkskip { background: var(--brk); color: #ffffff; }
   .mascot { display: flex; align-items: center; justify-content: center; height: 96px; margin: 4px 0 2px; }
   .mascot svg { height: 92px; width: auto; }
+  .modeseg { display: flex; background: var(--line); border-radius: 12px; padding: 3px; margin-bottom: 6px; }
+  .modeseg button { flex: 1; text-align: center; font-size: 13px; font-weight: 800; padding: 8px 0;
+    border-radius: 10px; color: var(--muted); border: none; background: none; cursor: pointer; font-family: inherit; }
+  .modeseg button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .presets { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; margin: 6px 0 4px; }
+  .timeset { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0 2px; }
+  .tsbtn { width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--line);
+    background: var(--card); color: var(--ink); font-size: 18px; font-weight: 800; cursor: pointer; font-family: inherit; }
+  .tsval { font-family: "Futura","Avenir Next",sans-serif; font-weight: 700; font-size: 30px; color: var(--numc); min-width: 130px; text-align: center; }
+  .tslab { font-size: 11px; color: var(--muted); font-weight: 700; text-align: center; margin-top: -2px; }
   .tmini { font-size: 12px; color: var(--muted); text-align: center; font-weight: 600; margin-top: 8px; line-height: 1.7; }
   .btn {
     width: 100%; height: 52px; border-radius: 14px; border: none; cursor: pointer;
@@ -230,6 +240,10 @@
     .logrow .num { font-size: 20px; }
     .empty { font-size: 16px; padding: 28px 0; }
     .chip { font-size: 15px; padding: 10px 22px; }
+    .modeseg button { font-size: 16px; padding: 12px 0; }
+    .tsbtn { width: 54px; height: 54px; font-size: 22px; border-radius: 14px; }
+    .tsval { font-size: 38px; min-width: 180px; }
+    .tslab { font-size: 13px; }
     .chipline { gap: 10px; margin: 14px 0 10px; }
     .mascot { height: 150px; margin: 14px 0 8px; }
     .mascot svg { height: 146px; }
@@ -295,9 +309,22 @@
   <section id="scr-timer" class="screen">
     <div class="appbar">
       <button class="backbtn" onclick="nav('home')">▼</button>
-      <span class="pagetitle">ポモドーロ</span>
+      <span class="pagetitle" id="timer-title">ポモドーロ</span>
+    </div>
+    <div class="modeseg">
+      <button id="seg-pomo" class="on" onclick="setMode('pomo')">ポモドーロ</button>
+      <button id="seg-exam" onclick="setMode('exam')">模試タイマー</button>
     </div>
     <div class="chipline" id="tag-chips"></div>
+    <div id="exam-setup" hidden>
+      <div class="presets" id="exam-presets"></div>
+      <div class="timeset">
+        <button class="tsbtn" onclick="adjustExam(-5)">−</button>
+        <span class="tsval" id="exam-val">1:15:00</span>
+        <button class="tsbtn" onclick="adjustExam(5)">＋</button>
+      </div>
+      <div class="tslab">5分きざみで調整（長押しでなく連打でOK）</div>
+    </div>
     <div class="ringwrap" id="ring">
       <div class="ringin">
         <span class="tm" id="ring-time">25:00</span>
@@ -336,6 +363,8 @@
 "use strict";
 const LS_LOGS = "englog_logs", LS_TAGS = "englog_tags", LS_TIMER = "englog_timer", LS_BAK = "englog_backup";
 const WORK = 25 * 60, BREAK = 5 * 60;
+const LS_MODE = "englog_mode", LS_EXAM = "englog_exam";
+const EXAM_PRESETS = [30, 45, 60, 75, 90, 120];
 const YOBI = ["日","月","火","水","木","金","土"];
 
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -345,11 +374,20 @@ const tags = () => load(LS_TAGS, ["単語", "リスニング", "文法"]);
 const dstr = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const today = () => dstr(new Date());
 let selTag = tags()[0];
+let uiMode = load(LS_MODE, "pomo") === "exam" ? "exam" : "pomo";
+let examMin = Number(load(LS_EXAM, 75)) || 75;
 let histTab = "w", histWeekOff = 0, histMonth = (() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); })();
 
 const fmtH = s => `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}`;
 const fmtM = s => { s = Math.max(0, Math.round(s)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
 const fmtMin = s => `${Math.round(s/60)}分`;
+const fmtT = s => {
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), x = s%60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`
+    : `${m}:${String(x).padStart(2,"0")}`;
+};
 
 function weekDates(off = 0) {
   const now = new Date();
@@ -420,11 +458,39 @@ function renderHome() {
 
 /* ===== timer ===== */
 function timerState() { return load(LS_TIMER, null); }
+function setMode(m) {
+  if (timerState()) { alert("タイマー実行中は切り替えできません。\n先に停止してください。"); return; }
+  uiMode = m; store(LS_MODE, m);
+  renderTimerScreen();
+}
+function adjustExam(deltaMin) {
+  if (timerState()) return;
+  examMin = Math.min(300, Math.max(5, examMin + deltaMin));
+  store(LS_EXAM, examMin);
+  renderTimerScreen();
+}
+function setExam(min) {
+  if (timerState()) return;
+  examMin = min; store(LS_EXAM, min);
+  renderTimerScreen();
+}
 function renderTimerScreen() {
   const t = timerState();
   document.getElementById("tag-chips").innerHTML = tags().map(tg =>
     `<button class="chip${tg === selTag ? " on" : ""}" onclick="pickTag('${tg.replace(/'/g,"\\'")}')">${tg}</button>`
   ).join("") + `<button class="chip" onclick="addTag()">＋</button>`;
+  const isExam = uiMode === "exam" || (t && t.mode === "exam");
+  document.getElementById("seg-pomo").classList.toggle("on", !isExam);
+  document.getElementById("seg-exam").classList.toggle("on", isExam);
+  document.getElementById("timer-title").textContent = isExam ? "模試タイマー" : "ポモドーロ";
+  const setup = document.getElementById("exam-setup");
+  setup.hidden = !(isExam && !t);
+  if (isExam) {
+    document.getElementById("exam-presets").innerHTML = EXAM_PRESETS.map(m =>
+      `<button class="chip${m === examMin ? " on" : ""}" onclick="setExam(${m})">${fmtT(m*60)}</button>`
+    ).join("");
+    document.getElementById("exam-val").textContent = fmtT(examMin*60);
+  }
   paintTimer();
 }
 function pickTag(tg) {
@@ -445,8 +511,14 @@ function remainingSec(t) {
 function primaryAction() {
   const t = timerState();
   if (!t) {
-    store(LS_TIMER, { mode: "work", tag: selTag, endTs: Date.now() + WORK*1000, total: WORK });
-  } else if (t.mode === "work") {
+    if (uiMode === "exam") {
+      const total = examMin * 60;
+      store(LS_TIMER, { mode: "exam", tag: selTag, endTs: Date.now() + total*1000, total });
+    } else {
+      store(LS_TIMER, { mode: "work", tag: selTag, endTs: Date.now() + WORK*1000, total: WORK });
+    }
+    renderTimerScreen();
+  } else if (t.mode === "work" || t.mode === "exam") {
     if (t.paused) {
       t.endTs = Date.now() + t.remaining * 1000;
       delete t.paused; delete t.remaining;
@@ -462,13 +534,13 @@ function primaryAction() {
 }
 function stopAction() {
   const t = timerState();
-  if (!t || t.mode !== "work") return;
+  if (!t || (t.mode !== "work" && t.mode !== "exam")) return;
   const elapsed = t.total - remainingSec(t);
   if (elapsed >= 60) {
     if (confirm(`ここまでの ${fmtMin(elapsed)} を記録して終了しますか？\n（キャンセル＝記録せず破棄）`)) addLog(t.tag, elapsed);
   }
   localStorage.removeItem(LS_TIMER);
-  paintTimer(); renderPlaybar();
+  renderTimerScreen(); renderPlaybar();
 }
 function tick() {
   const t = timerState();
@@ -477,11 +549,16 @@ function tick() {
       addLog(t.tag, t.total);
       store(LS_TIMER, { mode: "break", tag: t.tag, endTs: Date.now() + BREAK*1000, total: BREAK });
       beep(2);
+    } else if (t.mode === "exam") {
+      addLog(t.tag, t.total);
+      localStorage.removeItem(LS_TIMER);
+      beep(3);
     } else {
       localStorage.removeItem(LS_TIMER);
       beep(1);
     }
     if (document.getElementById("scr-home").classList.contains("on")) renderHome();
+    renderTimerScreen();
   }
   paintTimer(); renderPlaybar();
 }
@@ -537,7 +614,7 @@ function paintTimer() {
   const isBrk = !!t && t.mode === "break";
   inEl.classList.toggle("brk", isBrk);
   btn.classList.toggle("brkskip", isBrk);
-  btn2.hidden = !(t && t.mode === "work");
+  btn2.hidden = !(t && (t.mode === "work" || t.mode === "exam"));
   const mascotEl = document.getElementById("mascot");
   if (mascotEl) {
     const mst = !t ? "idle" : (t.mode === "break" ? "break" : (t.paused ? "paused" : "work"));
@@ -545,17 +622,30 @@ function paintTimer() {
   }
   if (!t) {
     ring.style.background = `conic-gradient(var(--steel) 0 0%, var(--bar) 0% 100%)`;
-    timeEl.textContent = "25:00";
-    labEl.textContent = `きょう ${pomosToday()}ポモ / ${selTag}`;
-    btn.textContent = "スタート";
-    note.textContent = "25分たつと自動でログに追加され、5分休憩に入ります";
+    if (uiMode === "exam") {
+      timeEl.textContent = fmtT(examMin * 60);
+      labEl.textContent = `模試モード / ${selTag}`;
+      btn.textContent = "スタート";
+      note.textContent = "設定した時間でカウントダウン。終了すると自動で記録されます";
+    } else {
+      timeEl.textContent = "25:00";
+      labEl.textContent = `きょう ${pomosToday()}ポモ / ${selTag}`;
+      btn.textContent = "スタート";
+      note.textContent = "25分たつと自動でログに追加され、5分休憩に入ります";
+    }
   } else {
     const remaining = remainingSec(t);
     const frac = Math.min(100, (1 - remaining / t.total) * 100);
     const arc = isBrk ? "var(--brk-arc)" : "var(--steel)";
     ring.style.background = `conic-gradient(${arc} 0 ${frac}%, var(--bar) ${frac}% 100%)`;
-    timeEl.textContent = fmtM(remaining);
-    if (t.mode === "work") {
+    timeEl.textContent = fmtT(remaining);
+    if (t.mode === "exam") {
+      labEl.textContent = t.paused ? `⏸ 一時停止中 / ${t.tag}` : `模試 ${fmtT(t.total)} / ${t.tag}`;
+      btn.textContent = t.paused ? "▶ 再開する" : "⏸ 一時停止";
+      note.textContent = t.paused
+        ? "カウントは止まっています"
+        : "ホームに戻ってもタイマーは動き続けます";
+    } else if (t.mode === "work") {
       labEl.textContent = t.paused ? `⏸ 一時停止中 / ${t.tag}` : `${pomosToday()+1}ポモ目 / ${t.tag}`;
       btn.textContent = t.paused ? "▶ 再開する" : "⏸ 一時停止";
       note.textContent = t.paused
@@ -574,13 +664,15 @@ function renderPlaybar() {
   const t = timerState();
   const tx = document.getElementById("pb-tx"), sub = document.getElementById("pb-sub");
   pb.classList.toggle("brk", !!t && t.mode === "break");
-  if (!t) { tx.textContent = "25:00 ポモドーロ"; sub.textContent = `タグ: ${selTag}`; }
-  else {
+  if (!t) {
+    tx.textContent = uiMode === "exam" ? `${fmtT(examMin*60)} 模試タイマー` : "25:00 ポモドーロ";
+    sub.textContent = `タグ: ${selTag}`;
+  } else {
     const remaining = remainingSec(t);
-    tx.textContent = t.mode === "work"
-      ? `${fmtM(remaining)} ${t.paused ? "一時停止中" : "実行中"}`
-      : `${fmtM(remaining)} 休憩中`;
-    sub.textContent = t.mode === "work" ? t.tag : "";
+    tx.textContent = t.mode === "break"
+      ? `${fmtT(remaining)} 休憩中`
+      : `${fmtT(remaining)} ${t.paused ? "一時停止中" : (t.mode === "exam" ? "模試" : "実行中")}`;
+    sub.textContent = t.mode === "break" ? "" : t.tag;
   }
 }
 function beep(n) {
