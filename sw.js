@@ -1,6 +1,6 @@
 /* ENGLOG service worker — オフライン対応
    アプリを更新したら CACHE の "v1" を "v2" のように上げること */
-const CACHE = "englog-v4";
+const CACHE = "englog-v5";
 const ASSETS = ["./", "./index.html", "./englog.html", "./icon.png"];
 
 self.addEventListener("install", (e) => {
