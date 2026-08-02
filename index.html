@@ -147,8 +147,11 @@
   .ringin.brk { background: var(--brk); }
   .ringin.brk .lb { color: #e2f2e6; }
   .btn.brkskip { background: var(--brk); color: #ffffff; }
-  .mascot { display: flex; align-items: center; justify-content: center; height: 96px; margin: 4px 0 2px; }
+  .mascot { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 96px; margin: 4px 0 0; }
   .mascot svg { height: 92px; width: auto; }
+  .mascot.n2 svg { height: 78px; }
+  .mascot.n3 svg { height: 68px; }
+  .mhint { font-size: 11px; color: var(--muted); font-weight: 700; text-align: center; margin: 2px 0 0; }
   .modeseg { display: flex; background: var(--line); border-radius: 12px; padding: 3px; margin-bottom: 6px; }
   .modeseg button { flex: 1; text-align: center; font-size: 13px; font-weight: 800; padding: 8px 0;
     border-radius: 10px; color: var(--muted); border: none; background: none; cursor: pointer; font-family: inherit; }
@@ -245,8 +248,11 @@
     .tsval { font-size: 38px; min-width: 180px; }
     .tslab { font-size: 13px; }
     .chipline { gap: 10px; margin: 14px 0 10px; }
-    .mascot { height: 150px; margin: 14px 0 8px; }
+    .mascot { height: 150px; margin: 14px 0 0; gap: 8px; }
     .mascot svg { height: 146px; }
+    .mascot.n2 svg { height: 120px; }
+    .mascot.n3 svg { height: 104px; }
+    .mhint { font-size: 13px; margin-top: 4px; }
     .tmini { font-size: 15px; margin-top: 12px; }
     .btn { height: 62px; font-size: 19px; border-radius: 16px; }
     .btn.small { height: 52px; font-size: 16px; }
@@ -332,6 +338,7 @@
       </div>
     </div>
     <div class="mascot" id="mascot"></div>
+    <div class="mhint" id="mascot-hint"></div>
     <p class="tmini" id="timer-note">25分たつと自動でログに追加され、5分休憩に入ります</p>
     <div style="flex:1"></div>
     <button class="btn" id="timer-btn" onclick="primaryAction()">スタート</button>
@@ -562,45 +569,228 @@ function tick() {
   }
   paintTimer(); renderPlaybar();
 }
-function mascotSVG(state) {
-  const body = `
+/* ===== マスコット素材（~/Claude/アプリ制作/キャラクター/mascots.js の埋め込みコピー） ===== */
+/* MASCOTS-LIB-START */
+/* ============================================================
+   オリジナルマスコット素材ライブラリ
+   ------------------------------------------------------------
+   使い方（どのアプリでもOK）:
+     <script src="mascots.js"><\/script>
+     el.innerHTML = MASCOTS.svg("mori", "work");
+
+   引数:
+     id    … "mori" | "shian" | "kota"
+     state … "idle" | "work" | "paused" | "break"
+
+   すべてポケモンの配色から起こしたオリジナル生物です。
+   （公式イラストは使用していません）
+   更新日: 2026-08-01
+   ============================================================ */
+(function (global) {
+  "use strict";
+
+  const VIEWBOX = "0 0 130 100";
+
+  /* ---------- 1. ヤモリの「モリ」（キモリ配色） ---------- */
+  const mori = {
+    id: "mori",
+    name: "ヤモリのモリ",
+    theme: "kimori",
+    note: "黄緑の体・赤いお腹・黄色い目。ENGLOGのキモリテーマ担当。",
+    colors: { body: "#7cc84a", body2: "#74c144", tail: "#3f8f2e", belly: "#e0483a", eye: "#f2a41f", ink: "#243b12" },
+    body() {
+      return `
     <path d="M92 70 q26 0 30 20 q-1 8 -9 6 q3 -14 -13 -14 z" fill="#3f8f2e"/>
     <ellipse cx="60" cy="66" rx="34" ry="28" fill="#74c144"/>
     <ellipse cx="60" cy="72" rx="13" ry="18" fill="#e0483a"/>
     <path d="M30 62 q-12 4 -13 14" stroke="#5aa62e" stroke-width="8" fill="none" stroke-linecap="round"/>
     <path d="M90 62 q12 4 13 14" stroke="#5aa62e" stroke-width="8" fill="none" stroke-linecap="round"/>
     <ellipse cx="60" cy="36" rx="30" ry="26" fill="#7cc84a"/>`;
-  let face;
-  if (state === "break") {
-    face = `
+    },
+    face(state) {
+      if (state === "break") return `
       <path d="M42 34 q6 6 13 0" stroke="#243b12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
       <path d="M65 34 q6 6 13 0" stroke="#243b12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
       <path d="M56 48 q4 3 8 0" stroke="#3f7a24" stroke-width="2.4" fill="none" stroke-linecap="round"/>
       <text x="90" y="26" font-size="15" fill="#3f7a24" font-weight="700">z</text>
       <text x="99" y="15" font-size="10" fill="#5aa62e" font-weight="700">z</text>`;
-  } else if (state === "work") {
-    face = `
+      if (state === "work") return `
       <circle cx="48" cy="35" r="10.5" fill="#fff"/><circle cx="72" cy="35" r="10.5" fill="#fff"/>
       <circle cx="49" cy="36" r="6" fill="#f2a41f"/><circle cx="71" cy="36" r="6" fill="#f2a41f"/>
       <circle cx="50" cy="37" r="3" fill="#243b12"/><circle cx="70" cy="37" r="3" fill="#243b12"/>
       <path d="M40 24 l14 4" stroke="#3f7a24" stroke-width="2.6" stroke-linecap="round"/>
       <path d="M80 24 l-14 4" stroke="#3f7a24" stroke-width="2.6" stroke-linecap="round"/>
       <path d="M55 48 l10 0" stroke="#3f7a24" stroke-width="2.6" stroke-linecap="round"/>`;
-  } else if (state === "paused") {
-    face = `
+      if (state === "paused") return `
       <circle cx="48" cy="34" r="10.5" fill="#fff"/><circle cx="72" cy="34" r="10.5" fill="#fff"/>
       <circle cx="51" cy="35" r="5.5" fill="#f2a41f"/><circle cx="75" cy="35" r="5.5" fill="#f2a41f"/>
       <circle cx="52" cy="36" r="2.6" fill="#243b12"/><circle cx="76" cy="36" r="2.6" fill="#243b12"/>
       <path d="M54 48 q6 4 12 0" stroke="#3f7a24" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
-  } else {
-    face = `
+      return `
       <circle cx="48" cy="34" r="11" fill="#fff"/><circle cx="72" cy="34" r="11" fill="#fff"/>
       <circle cx="49" cy="35" r="6.5" fill="#f2a41f"/><circle cx="71" cy="35" r="6.5" fill="#f2a41f"/>
       <circle cx="50" cy="36" r="3" fill="#243b12"/><circle cx="70" cy="36" r="3" fill="#243b12"/>
       <path d="M54 48 q6 5 12 0" stroke="#3f7a24" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
-  }
-  return `<svg viewBox="0 0 130 100" xmlns="http://www.w3.org/2000/svg">${body}${face}</svg>`;
+    },
+  };
+
+  /* ---------- 2. ちいさな竜「シアン」（ギラティナ色違い配色） ---------- */
+  const shian = {
+    id: "shian",
+    name: "ちいさな竜シアン",
+    theme: "cyan",
+    note: "深いティールの体にクリームの襟巻き。腹当てには山形（シェブロン）の彫り。角は後ろへ反る。",
+    colors: { body: "#17879b", head: "#21a2ba", tail: "#12707f", cream: "#f5e7c4", eye: "#e0483a", ink: "#10282d" },
+    body() {
+      return `
+    <path d="M96 76 q26 2 26 20 q-3 7 -10 3 q4 -12 -16 -14 z" fill="#12707f"/>
+    <ellipse cx="60" cy="72" rx="28" ry="22" fill="#17879b"/>
+    <ellipse cx="60" cy="76" rx="14" ry="15" fill="#f5e7c4"/>
+    <path d="M52 72 l8 6 l8 -6" stroke="#17879b" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M53 82 l7 5 l7 -5" stroke="#17879b" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M60 44 m-30 8 q4 -12 12 -14 q6 10 18 10 q12 0 18 -10 q8 2 12 14 q-8 12 -30 12 q-22 0 -30 -12 z" fill="#f5e7c4"/>
+    <ellipse cx="60" cy="36" rx="26" ry="23" fill="#21a2ba"/>
+    <path d="M44 16 q2 10 6 14" stroke="#f5e7c4" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M76 16 q-2 10 -6 14" stroke="#f5e7c4" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+    },
+    face(state) {
+      if (state === "break") return `
+      <path d="M42 34 q6 6 12 0" stroke="#10282d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M66 34 q6 6 12 0" stroke="#10282d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M56 46 q4 3 8 0" stroke="#10282d" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+      <text x="88" y="26" font-size="14" fill="#f5e7c4" font-weight="700">z</text>
+      <text x="97" y="15" font-size="10" fill="#f5e7c4" font-weight="700">z</text>`;
+      if (state === "work") return `
+      <circle cx="50" cy="36" r="9" fill="#fff"/><circle cx="70" cy="36" r="9" fill="#fff"/>
+      <circle cx="51" cy="37" r="5" fill="#e0483a"/><circle cx="69" cy="37" r="5" fill="#e0483a"/>
+      <circle cx="52" cy="38" r="2.5" fill="#10282d"/><circle cx="68" cy="38" r="2.5" fill="#10282d"/>
+      <path d="M41 26 l13 4" stroke="#10282d" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M79 26 l-13 4" stroke="#10282d" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M55 46 l10 0" stroke="#10282d" stroke-width="2.5" stroke-linecap="round"/>`;
+      if (state === "paused") return `
+      <circle cx="50" cy="35" r="9.5" fill="#fff"/><circle cx="70" cy="35" r="9.5" fill="#fff"/>
+      <circle cx="53" cy="36" r="5" fill="#e0483a"/><circle cx="73" cy="36" r="5" fill="#e0483a"/>
+      <circle cx="54" cy="37" r="2.4" fill="#10282d"/><circle cx="74" cy="37" r="2.4" fill="#10282d"/>
+      <path d="M55 46 q5 4 10 0" stroke="#10282d" stroke-width="2.3" fill="none" stroke-linecap="round"/>`;
+      return `
+      <circle cx="50" cy="35" r="9.5" fill="#fff"/><circle cx="70" cy="35" r="9.5" fill="#fff"/>
+      <circle cx="51" cy="36" r="5.4" fill="#e0483a"/><circle cx="69" cy="36" r="5.4" fill="#e0483a"/>
+      <circle cx="52" cy="37" r="2.5" fill="#10282d"/><circle cx="68" cy="37" r="2.5" fill="#10282d"/>
+      <path d="M55 46 q5 4 10 0" stroke="#10282d" stroke-width="2.3" fill="none" stroke-linecap="round"/>`;
+    },
+  };
+
+  /* ---------- 3. けむり亀「コタ」（コータス配色） ---------- */
+  const kota = {
+    id: "kota",
+    name: "けむり亀コタ",
+    theme: "panda",
+    note: "黄土色の体・赤茶の甲羅・炭の穴・立ちのぼる煙。集中中は甲羅が赤熱し、休憩中は煙が増える。",
+    colors: { body: "#e8d97a", body2: "#e0cc6e", shell: "#b5604f", hole: "#7d3b30", hot: "#e0483a", smoke: "#e2dbcd", ink: "#3a2a10" },
+    body(state) {
+      const hole = state === "work" ? "#e0483a" : "#7d3b30";
+      const smoke = state === "break"
+        ? `<circle cx="24" cy="18" r="12" fill="#e2dbcd"/><circle cx="10" cy="30" r="8" fill="#e2dbcd"/><circle cx="38" cy="10" r="7" fill="#e8e2d6"/>
+    <circle cx="106" cy="18" r="12" fill="#e2dbcd"/><circle cx="120" cy="30" r="8" fill="#e2dbcd"/><circle cx="92" cy="10" r="7" fill="#e8e2d6"/>`
+        : state === "work"
+        ? `<circle cx="26" cy="20" r="10" fill="#ded6c6"/><circle cx="14" cy="29" r="6.5" fill="#ded6c6"/>
+    <circle cx="104" cy="20" r="10" fill="#ded6c6"/><circle cx="116" cy="29" r="6.5" fill="#ded6c6"/>`
+        : `<circle cx="26" cy="22" r="9" fill="#e2dbcd"/><circle cx="15" cy="30" r="6" fill="#e2dbcd"/>
+    <circle cx="104" cy="22" r="9" fill="#e2dbcd"/><circle cx="115" cy="30" r="6" fill="#e2dbcd"/>`;
+      const headY = state === "break" ? 44 : 42;
+      const headRy = state === "break" ? 21 : 23;
+      return `
+    ${smoke}
+    <ellipse cx="26" cy="86" rx="11" ry="7.5" fill="#d9c163"/>
+    <ellipse cx="94" cy="86" rx="11" ry="7.5" fill="#d9c163"/>
+    <ellipse cx="60" cy="64" rx="40" ry="30" fill="#b5604f"/>
+    <circle cx="38" cy="58" r="6" fill="${hole}"/><circle cx="60" cy="50" r="6" fill="${hole}"/><circle cx="82" cy="58" r="6" fill="${hole}"/>
+    <ellipse cx="60" cy="82" rx="42" ry="9" fill="#e0cc6e"/>
+    <ellipse cx="60" cy="${headY}" rx="27" ry="${headRy}" fill="#e8d97a"/>`;
+    },
+    face(state) {
+      if (state === "break") return `
+      <path d="M42 42 q6 6 13 0" stroke="#3a2a10" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M65 42 q6 6 13 0" stroke="#3a2a10" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M56 54 q4 3 8 0" stroke="#8a6a2e" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <text x="86" y="52" font-size="15" fill="#8a6a2e" font-weight="700">z</text>
+      <text x="96" y="42" font-size="10" fill="#a89468" font-weight="700">z</text>`;
+      if (state === "work") return `
+      <circle cx="49" cy="41" r="9" fill="#fff"/><circle cx="71" cy="41" r="9" fill="#fff"/>
+      <circle cx="50" cy="42" r="5" fill="#8a6a2e"/><circle cx="70" cy="42" r="5" fill="#8a6a2e"/>
+      <circle cx="51" cy="43" r="2.5" fill="#3a2a10"/><circle cx="69" cy="43" r="2.5" fill="#3a2a10"/>
+      <path d="M40 30 l14 4" stroke="#8a6a2e" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M80 30 l-14 4" stroke="#8a6a2e" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M55 54 l10 0" stroke="#8a6a2e" stroke-width="2.6" stroke-linecap="round"/>`;
+      if (state === "paused") return `
+      <circle cx="49" cy="40" r="9.5" fill="#fff"/><circle cx="71" cy="40" r="9.5" fill="#fff"/>
+      <circle cx="52" cy="41" r="5" fill="#8a6a2e"/><circle cx="74" cy="41" r="5" fill="#8a6a2e"/>
+      <circle cx="53" cy="42" r="2.4" fill="#3a2a10"/><circle cx="75" cy="42" r="2.4" fill="#3a2a10"/>
+      <path d="M54 54 q6 4 12 0" stroke="#8a6a2e" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+      return `
+      <circle cx="49" cy="40" r="9.5" fill="#fff"/><circle cx="71" cy="40" r="9.5" fill="#fff"/>
+      <circle cx="50" cy="41" r="5.4" fill="#8a6a2e"/><circle cx="70" cy="41" r="5.4" fill="#8a6a2e"/>
+      <circle cx="51" cy="42" r="2.5" fill="#3a2a10"/><circle cx="69" cy="42" r="2.5" fill="#3a2a10"/>
+      <path d="M54 54 q6 5 12 0" stroke="#8a6a2e" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+    },
+  };
+
+  const LIST = { mori, shian, kota };
+  const STATES = ["idle", "work", "paused", "break"];
+
+  const API = {
+    list: LIST,
+    ids: Object.keys(LIST),
+    states: STATES,
+    viewBox: VIEWBOX,
+    /** 内側のマークアップのみ（<svg>タグなし）*/
+    inner(id, state) {
+      const c = LIST[id] || mori;
+      const st = STATES.includes(state) ? state : "idle";
+      return c.body(st) + c.face(st);
+    },
+    /** 完成した<svg>文字列 */
+    svg(id, state, attrs) {
+      return `<svg viewBox="${VIEWBOX}" xmlns="http://www.w3.org/2000/svg"${attrs ? " " + attrs : ""}>${API.inner(id, state)}</svg>`;
+    },
+    /** テーマ名からキャラを引く（例: "kimori" → "mori"）*/
+    byTheme(theme) {
+      const hit = API.ids.find((k) => LIST[k].theme === theme);
+      return hit || "mori";
+    },
+  };
+
+  global.MASCOTS = API;
+  if (typeof module !== "undefined" && module.exports) module.exports = API;
+})(typeof window !== "undefined" ? window : globalThis);
+/* MASCOTS-LIB-END */
+
+/* 勉強1時間ごとに仲間が1体ずつ増える */
+const UNLOCK_SEC = 3600;
+function mascotOrder() {
+  const themeId = MASCOTS.byTheme(load("englog_theme", "panda"));
+  return [themeId, ...MASCOTS.ids.filter((x) => x !== themeId)];
 }
+function mascotCount() {
+  return Math.min(mascotOrder().length, 1 + Math.floor(secByDate(today()) / UNLOCK_SEC));
+}
+function renderMascots(state) {
+  const el = document.getElementById("mascot");
+  if (!el || typeof MASCOTS === "undefined") return;
+  const order = mascotOrder();
+  const n = mascotCount();
+  el.className = "mascot n" + n;
+  el.innerHTML = order.slice(0, n).map((id) => MASCOTS.svg(id, state)).join("");
+  const hint = document.getElementById("mascot-hint");
+  if (!hint) return;
+  if (n >= order.length) {
+    hint.textContent = "仲間ぜんいん集合！";
+  } else {
+    const rest = UNLOCK_SEC - (secByDate(today()) % UNLOCK_SEC);
+    hint.textContent = `あと${Math.ceil(rest / 60)}分で「${MASCOTS.list[order[n]].name}」が仲間に`;
+  }
+}
+
 function paintTimer() {
   if (document.getElementById("scr-timer").offsetParent === null) return;
   const t = timerState();
@@ -615,11 +805,8 @@ function paintTimer() {
   inEl.classList.toggle("brk", isBrk);
   btn.classList.toggle("brkskip", isBrk);
   btn2.hidden = !(t && (t.mode === "work" || t.mode === "exam"));
-  const mascotEl = document.getElementById("mascot");
-  if (mascotEl) {
-    const mst = !t ? "idle" : (t.mode === "break" ? "break" : (t.paused ? "paused" : "work"));
-    mascotEl.innerHTML = mascotSVG(mst);
-  }
+  const mst = !t ? "idle" : (t.mode === "break" ? "break" : (t.paused ? "paused" : "work"));
+  renderMascots(mst);
   if (!t) {
     ring.style.background = `conic-gradient(var(--steel) 0 0%, var(--bar) 0% 100%)`;
     if (uiMode === "exam") {
