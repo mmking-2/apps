@@ -370,6 +370,9 @@
 "use strict";
 const LS_LOGS = "englog_logs", LS_TAGS = "englog_tags", LS_TIMER = "englog_timer", LS_BAK = "englog_backup";
 const WORK = 25 * 60, BREAK = 5 * 60;
+/* ポモドーロを1回やりきったときに記録する時間。
+   実測は25分だが、休憩5分ぶんを込みにして30分単位で集計する（本人の希望） */
+const LOG_UNIT = 30 * 60;
 const LS_MODE = "englog_mode", LS_EXAM = "englog_exam";
 const EXAM_PRESETS = [30, 45, 60, 75, 90, 120];
 const YOBI = ["日","月","火","水","木","金","土"];
@@ -553,7 +556,7 @@ function tick() {
   const t = timerState();
   if (t && !t.paused && Date.now() >= t.endTs) {
     if (t.mode === "work") {
-      addLog(t.tag, t.total);
+      addLog(t.tag, LOG_UNIT);   // 実測25分 → 30分として記録
       store(LS_TIMER, { mode: "break", tag: t.tag, endTs: Date.now() + BREAK*1000, total: BREAK });
       beep(2);
     } else if (t.mode === "exam") {
