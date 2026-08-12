@@ -33,6 +33,12 @@
     --numc: #1c3a68;
     --today-bg: #6491bd;
     --today-ink: #ffffff;
+    /* ごほうび段階の色（テーマ共通）。4時間超=マゼンタ、7時間目=金 */
+    --tier2: #e01f8f;
+    --tier3: #ffc93d;
+    --tier3-glow: rgba(255, 201, 61, 0.8);
+    --mk2: rgba(224, 31, 143, 0.45);
+    --mk3: rgba(214, 155, 20, 0.55);
   }
   :root[data-theme="cyan"] {
     --bg: #2ab5cb; --card: #4cc4d7; --line: #1a97ab; --ink: #10282d; --muted: #145a66;
@@ -96,6 +102,40 @@
   .pgcell { height: 13px; border-radius: 3px; background: var(--card); border: 1.2px dashed var(--line); }
   .pgcell.f { background: var(--bar-data); border: none; }
   .pgcol.today .pgcell.f { background: var(--acc); }
+  /* ---- ごほうび段階：1マス=30分。9マス目(4時間超)からピンク、13マス目(7時間目)から金＋キラキラ ---- */
+  .pgcell.f.t2, .pgcol.today .pgcell.f.t2 { background: var(--tier2); }
+  .pgcell.f.t3, .pgcol.today .pgcell.f.t3 {
+    position: relative;
+    background: linear-gradient(115deg, var(--tier2) 0%, var(--tier3) 42%,
+                #fff7dd 50%, var(--tier3) 58%, var(--tier2) 100%);
+    background-size: 280% 100%;
+    animation: pgshine 2.8s linear infinite;
+    box-shadow: 0 0 7px var(--tier3-glow);
+  }
+  .pgcell.f.t3::after {
+    content: ""; position: absolute; inset: -3px; pointer-events: none;
+    background:
+      radial-gradient(circle at 16% 28%, #fff 0 1.2px, transparent 1.8px),
+      radial-gradient(circle at 74% 72%, #fff 0 1px, transparent 1.5px),
+      radial-gradient(circle at 92% 20%, #fff 0 .9px, transparent 1.3px);
+    animation: pgtwinkle 1.9s ease-in-out infinite;
+  }
+  .pgcol .pgcell.f.t3:nth-child(2n)::after { animation-delay: .9s; }
+  @keyframes pgshine { to { background-position: -280% 0; } }
+  @keyframes pgtwinkle { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .pgcell.f.t3 { animation: none; }
+    .pgcell.f.t3::after { animation: none; opacity: .8; }
+  }
+  /* 到達前でも目標が見えるよう、色が変わる位置に薄い区切り線を引く */
+  .pgcell.mk { position: relative; }
+  .pgcell.mk::before {
+    content: ""; position: absolute; left: -1px; right: -1px; bottom: -2.5px;
+    border-top: 1.5px dashed var(--mk2); pointer-events: none;
+  }
+  .pgcell.mk3::before { border-top-color: var(--mk3); }
+  /* マスが増えて縦に伸びすぎないよう、11マス以上は1マスを低くする */
+  .pgrid.dense .pgcell { height: 9px; }
 
   .dots { display: flex; gap: 7px; margin-bottom: 18px; }
   .dot { flex: 1; aspect-ratio: 0.82; border-radius: 11px; background: var(--card);
@@ -147,10 +187,18 @@
   .ringin.brk { background: var(--brk); }
   .ringin.brk .lb { color: #e2f2e6; }
   .btn.brkskip { background: var(--brk); color: #ffffff; }
-  .mascot { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 96px; margin: 4px 0 0; }
+  .mascot { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 114px; margin: 4px 0 0; }
   .mascot svg { height: 92px; width: auto; }
   .mascot.n2 svg { height: 78px; }
   .mascot.n3 svg { height: 68px; }
+  .mascot.n4 svg { height: 60px; }
+  .mascot.n5 svg { height: 54px; }
+  /* レア枠だけ1.2倍。.mascot は align-items:flex-end なので足もとがそろう */
+  .mascot svg.rare { height: 110px; }
+  .mascot.n2 svg.rare { height: 94px; }
+  .mascot.n3 svg.rare { height: 82px; }
+  .mascot.n4 svg.rare { height: 72px; }
+  .mascot.n5 svg.rare { height: 65px; }
   .mhint { font-size: 11px; color: var(--muted); font-weight: 700; text-align: center; margin: 2px 0 0; }
   .modeseg { display: flex; background: var(--line); border-radius: 12px; padding: 3px; margin-bottom: 6px; }
   .modeseg button { flex: 1; text-align: center; font-size: 13px; font-weight: 800; padding: 8px 0;
@@ -248,10 +296,17 @@
     .tsval { font-size: 38px; min-width: 180px; }
     .tslab { font-size: 13px; }
     .chipline { gap: 10px; margin: 14px 0 10px; }
-    .mascot { height: 150px; margin: 14px 0 0; gap: 8px; }
+    .mascot { height: 180px; margin: 14px 0 0; gap: 8px; }
     .mascot svg { height: 146px; }
     .mascot.n2 svg { height: 120px; }
     .mascot.n3 svg { height: 104px; }
+    .mascot.n4 svg { height: 92px; }
+    .mascot.n5 svg { height: 84px; }
+    .mascot svg.rare { height: 175px; }
+    .mascot.n2 svg.rare { height: 144px; }
+    .mascot.n3 svg.rare { height: 125px; }
+    .mascot.n4 svg.rare { height: 110px; }
+    .mascot.n5 svg.rare { height: 101px; }
     .mhint { font-size: 13px; margin-top: 4px; }
     .tmini { font-size: 15px; margin-top: 12px; }
     .btn { height: 62px; font-size: 19px; border-radius: 16px; }
@@ -321,7 +376,6 @@
       <button id="seg-pomo" class="on" onclick="setMode('pomo')">ポモドーロ</button>
       <button id="seg-exam" onclick="setMode('exam')">模試タイマー</button>
     </div>
-    <div class="chipline" id="tag-chips"></div>
     <div id="exam-setup" hidden>
       <div class="presets" id="exam-presets"></div>
       <div class="timeset">
@@ -354,7 +408,6 @@
     <div class="seg">
       <button id="seg-w" class="on" onclick="setTab('w')">週</button>
       <button id="seg-m" onclick="setTab('m')">月</button>
-      <button id="seg-t" onclick="setTab('t')">タグ別</button>
     </div>
     <div id="hist-body"></div>
     <div style="flex:1"></div>
@@ -383,7 +436,6 @@ const logs = () => load(LS_LOGS, []);
 const tags = () => load(LS_TAGS, ["単語", "リスニング", "文法"]);
 const dstr = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const today = () => dstr(new Date());
-let selTag = tags()[0];
 let uiMode = load(LS_MODE, "pomo") === "exam" ? "exam" : "pomo";
 let examMin = Number(load(LS_EXAM, 75)) || 75;
 let histTab = "w", histWeekOff = 0, histMonth = (() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); })();
@@ -408,9 +460,9 @@ function weekDates(off = 0) {
 const secByDate = (ds) => logs().filter(x => x.d === ds).reduce((a, x) => a + x.sec, 0);
 const pomosToday = () => logs().filter(x => x.d === today() && x.sec >= WORK).length;
 
-function addLog(tag, sec) {
+function addLog(sec) {
   const all = logs();
-  all.push({ d: today(), tag, sec: Math.round(sec) });
+  all.push({ d: today(), sec: Math.round(sec) });
   store(LS_LOGS, all);
   backup();
 }
@@ -439,11 +491,20 @@ function renderHome() {
   document.getElementById("today-total").innerHTML =
     `${fmtH(secByDate(today()))}<small> ｜ 今週 ${fmtH(weekTotal)}</small>`;
   const pomos = wk.map(d => logs().filter(x => x.d === dstr(d) && x.sec >= WORK).length);
-  const rows = Math.max(6, ...pomos);
-  document.getElementById("week-bars").innerHTML = wk.map((d, i) => {
+  // 次に色が変わる段までは常に表示して、到達前から目標に見えるようにする
+  const maxP = Math.max(0, ...pomos);
+  const rows = Math.max(6, maxP, maxP >= 12 ? 16 : maxP >= 8 ? 13 : 9);
+  const grid = document.getElementById("week-bars");
+  grid.classList.toggle("dense", rows > 10);
+  grid.innerHTML = wk.map((d, i) => {
     const isT = dstr(d) === today();
     let cells = "";
-    for (let r = 0; r < rows; r++) cells += `<div class="pgcell${r < pomos[i] ? " f" : ""}"></div>`;
+    for (let r = 0; r < rows; r++) {
+      // 1マス=30分。r>=8（4時間超）でピンク、r>=12（7時間目）で金＋キラキラ
+      const fill = r >= pomos[i] ? "" : r >= 12 ? " f t3" : r >= 8 ? " f t2" : " f";
+      const mark = r === 8 ? " mk" : r === 12 ? " mk mk3" : "";
+      cells += `<div class="pgcell${fill}${mark}"></div>`;
+    }
     return `<div class="pgcol${isT ? " today" : ""}">${cells}</div>`;
   }).join("");
   document.getElementById("week-dots").innerHTML = wk.map(d => {
@@ -452,17 +513,11 @@ function renderHome() {
     const mark = isToday ? "今日" : done ? "✓" : d.getDate();
     return `<div class="${cls}"><span class="d1">${YOBI[d.getDay()]}</span><span class="d2 num">${mark}</span></div>`;
   }).join("");
-  const td = {};
-  logs().filter(x => x.d === today()).forEach(x => {
-    td[x.tag] = td[x.tag] || { n: 0, sec: 0 };
-    td[x.tag].n++; td[x.tag].sec += x.sec;
-  });
-  const keys = Object.keys(td);
-  document.getElementById("today-logs").innerHTML = keys.length === 0
+  const tdLogs = logs().filter(x => x.d === today());
+  const tdSec = tdLogs.reduce((a, x) => a + x.sec, 0);
+  document.getElementById("today-logs").innerHTML = tdLogs.length === 0
     ? `<div class="empty">まだ記録がありません。<br>下のバーからポモドーロをはじめよう。</div>`
-    : keys.map(t =>
-        `<div class="logrow"><span class="nm">${t}</span><span class="ct">${td[t].n}回</span><span class="num">${fmtH(td[t].sec)}</span></div>`
-      ).join("");
+    : `<div class="logrow"><span class="nm">ポモドーロ</span><span class="ct">${pomosToday()}回</span><span class="num">${fmtH(tdSec)}</span></div>`;
   renderPlaybar();
 }
 
@@ -486,9 +541,6 @@ function setExam(min) {
 }
 function renderTimerScreen() {
   const t = timerState();
-  document.getElementById("tag-chips").innerHTML = tags().map(tg =>
-    `<button class="chip${tg === selTag ? " on" : ""}" onclick="pickTag('${tg.replace(/'/g,"\\'")}')">${tg}</button>`
-  ).join("") + `<button class="chip" onclick="addTag()">＋</button>`;
   const isExam = uiMode === "exam" || (t && t.mode === "exam");
   document.getElementById("seg-pomo").classList.toggle("on", !isExam);
   document.getElementById("seg-exam").classList.toggle("on", isExam);
@@ -503,18 +555,6 @@ function renderTimerScreen() {
   }
   paintTimer();
 }
-function pickTag(tg) {
-  if (timerState()) return;
-  selTag = tg; renderTimerScreen();
-}
-function addTag() {
-  const name = prompt("新しいタグ名（例：シャドーイング）");
-  if (!name || !name.trim()) return;
-  const t = tags();
-  if (!t.includes(name.trim())) { t.push(name.trim()); store(LS_TAGS, t); }
-  selTag = name.trim();
-  renderTimerScreen();
-}
 function remainingSec(t) {
   return t.paused ? t.remaining : Math.max(0, (t.endTs - Date.now()) / 1000);
 }
@@ -523,9 +563,9 @@ function primaryAction() {
   if (!t) {
     if (uiMode === "exam") {
       const total = examMin * 60;
-      store(LS_TIMER, { mode: "exam", tag: selTag, endTs: Date.now() + total*1000, total });
+      store(LS_TIMER, { mode: "exam", endTs: Date.now() + total*1000, total });
     } else {
-      store(LS_TIMER, { mode: "work", tag: selTag, endTs: Date.now() + WORK*1000, total: WORK });
+      store(LS_TIMER, { mode: "work", endTs: Date.now() + WORK*1000, total: WORK });
     }
     renderTimerScreen();
   } else if (t.mode === "work" || t.mode === "exam") {
@@ -547,7 +587,7 @@ function stopAction() {
   if (!t || (t.mode !== "work" && t.mode !== "exam")) return;
   const elapsed = t.total - remainingSec(t);
   if (elapsed >= 60) {
-    if (confirm(`ここまでの ${fmtMin(elapsed)} を記録して終了しますか？\n（キャンセル＝記録せず破棄）`)) addLog(t.tag, elapsed);
+    if (confirm(`ここまでの ${fmtMin(elapsed)} を記録して終了しますか？\n（キャンセル＝記録せず破棄）`)) addLog(elapsed);
   }
   localStorage.removeItem(LS_TIMER);
   renderTimerScreen(); renderPlaybar();
@@ -556,11 +596,11 @@ function tick() {
   const t = timerState();
   if (t && !t.paused && Date.now() >= t.endTs) {
     if (t.mode === "work") {
-      addLog(t.tag, LOG_UNIT);   // 実測25分 → 30分として記録
-      store(LS_TIMER, { mode: "break", tag: t.tag, endTs: Date.now() + BREAK*1000, total: BREAK });
+      addLog(LOG_UNIT);   // 実測25分 → 30分として記録
+      store(LS_TIMER, { mode: "break", endTs: Date.now() + BREAK*1000, total: BREAK });
       beep(2);
     } else if (t.mode === "exam") {
-      addLog(t.tag, t.total);
+      addLog(t.total);
       localStorage.removeItem(LS_TIMER);
       beep(3);
     } else {
@@ -738,7 +778,164 @@ function tick() {
     },
   };
 
-  const LIST = { mori, shian, kota };
+  /* ---------- 4. みかづき獣「ミカ」（色違いアブソル配色） ---------- */
+  const mika = {
+    id: "mika",
+    name: "みかづき獣ミカ",
+    theme: null,
+    note: "寒色寄りの白い体にコーラルの三日月ヅノ。ほおの左右に毛束、うしろに大きな鎌しっぽ。目はティール。",
+    colors: { body: "#e9eef1", head: "#f4f7f9", cream: "#ffffff", coral: "#ef8f74", eye: "#21c9b6", ink: "#3f4a4e" },
+    body(state) {
+      /* 休憩中はしっぽを下ろす */
+      const tail = state === "break"
+        ? `<path d="M84 82 q28 6 38 -12 q4 26 -20 30 q-14 2 -20 -8 z" fill="#ef8f74"/>`
+        : `<path d="M84 74 q28 2 38 -22 q8 28 -18 36 q-14 4 -22 -4 z" fill="#ef8f74"/>`;
+      return `
+    ${tail}
+    <ellipse cx="56" cy="76" rx="25" ry="20" fill="#e9eef1"/>
+    <ellipse cx="56" cy="80" rx="12" ry="14" fill="#ffffff"/>
+    <ellipse cx="45" cy="92" rx="5" ry="4" fill="#ef8f74"/>
+    <ellipse cx="57" cy="94" rx="5" ry="4" fill="#ef8f74"/>
+    <ellipse cx="69" cy="92" rx="5" ry="4" fill="#ef8f74"/>
+    <path d="M56 46 m-27 7 q5 -12 12 -14 q6 10 15 10 q9 0 15 -10 q7 2 12 14
+             q-9 11 -27 11 q-18 0 -27 -11 z" fill="#ffffff"/>
+    <path d="M31 40 q-10 3 -12 12 q8 -5 14 -3 q-4 -4 -2 -9 z" fill="#ffffff"/>
+    <path d="M81 40 q10 3 12 12 q-8 -5 -14 -3 q4 -4 2 -9 z" fill="#ffffff"/>
+    <path d="M48 21 q-17 -17 5 -23 q23 -6 33 6 q-21 -6 -31 6 q-7 8 -3 13 z" fill="#ef8f74"/>
+    <ellipse cx="56" cy="37" rx="25" ry="22" fill="#f4f7f9"/>
+    <ellipse cx="56" cy="24" rx="4.6" ry="5.2" fill="#ef8f74"/>`;
+    },
+    face(state) {
+      if (state === "break") return `
+      <path d="M42 36 q6 6 12 0" stroke="#3f4a4e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M62 36 q6 6 12 0" stroke="#3f4a4e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M52 48 q4 3 8 0" stroke="#3f4a4e" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+      <text x="84" y="26" font-size="14" fill="#ef8f74" font-weight="700">z</text>
+      <text x="93" y="15" font-size="10" fill="#ef8f74" font-weight="700">z</text>`;
+      if (state === "work") return `
+      <circle cx="45" cy="38" r="9" fill="#fff"/><circle cx="67" cy="38" r="9" fill="#fff"/>
+      <circle cx="46" cy="39" r="5" fill="#21c9b6"/><circle cx="66" cy="39" r="5" fill="#21c9b6"/>
+      <circle cx="47" cy="40" r="2.4" fill="#3f4a4e"/><circle cx="65" cy="40" r="2.4" fill="#3f4a4e"/>
+      <path d="M36 28 l13 4" stroke="#3f4a4e" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M76 28 l-13 4" stroke="#3f4a4e" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M51 51 l10 0" stroke="#3f4a4e" stroke-width="2.4" stroke-linecap="round"/>`;
+      if (state === "paused") return `
+      <circle cx="45" cy="38" r="9.4" fill="#fff"/><circle cx="67" cy="38" r="9.4" fill="#fff"/>
+      <circle cx="48" cy="39" r="5" fill="#21c9b6"/><circle cx="70" cy="39" r="5" fill="#21c9b6"/>
+      <circle cx="49" cy="40" r="2.4" fill="#3f4a4e"/><circle cx="71" cy="40" r="2.4" fill="#3f4a4e"/>
+      <path d="M51 51 q5 4 10 0" stroke="#3f4a4e" stroke-width="2.3" fill="none" stroke-linecap="round"/>`;
+      return `
+      <circle cx="45" cy="38" r="9.4" fill="#fff"/><circle cx="67" cy="38" r="9.4" fill="#fff"/>
+      <circle cx="46" cy="39" r="5.3" fill="#21c9b6"/><circle cx="68" cy="39" r="5.3" fill="#21c9b6"/>
+      <circle cx="47" cy="40" r="2.5" fill="#3f4a4e"/><circle cx="69" cy="40" r="2.5" fill="#3f4a4e"/>
+      <path d="M51 51 q5 4 10 0" stroke="#3f4a4e" stroke-width="2.3" fill="none" stroke-linecap="round"/>`;
+    },
+  };
+
+  /* ---------- 5. きんかん竜「ギラ」（ギラティナ配色・レア枠） ----------
+     レア枠の作り方: 顔は通常の約65%（16×14）、図形は25枚以上、キャンバスの端まで使う。
+     後光の輪と金の欠片はCSSでゆっくり動く（休憩中だけ止まる）。 */
+  const giraPetals = (cx, cy, rx, ry, n, len, w, col, from, to) => {
+    const a0 = (from * Math.PI) / 180, a1 = (to * Math.PI) / 180;
+    let out = "";
+    for (let i = 0; i <= n; i++) {
+      const a = a0 + (a1 - a0) * (i / n);
+      const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry;
+      const deg = (a * 180) / Math.PI + 90;
+      out += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${w}" ry="${len}"
+               transform="rotate(${deg.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${col}"/>`;
+    }
+    return out;
+  };
+  const giraWing = (cx, cy, s, flip, col, tip) => `
+    <g transform="translate(${cx} ${cy}) scale(${flip * s} ${s})">
+      <path d="M0 2 q18 -20 40 -18 q-8 7 -4 13 q-9 -1 -13 5 q10 3 11 10
+               q-10 -5 -16 1 q8 6 5 13 q-12 -11 -23 -9 q5 -9 0 -15 z" fill="${col}"/>
+      ${tip ? `<ellipse cx="38" cy="-14" rx="4.4" ry="2.9" transform="rotate(-24 38 -14)" fill="${tip}"/>
+               <ellipse cx="34" cy="1" rx="4.2" ry="2.7" transform="rotate(-8 34 1)" fill="${tip}"/>
+               <ellipse cx="28" cy="16" rx="4" ry="2.7" transform="rotate(12 28 16)" fill="${tip}"/>` : ""}
+    </g>`;
+  const giraShard = (x, y, r, rot, col, delay, still) =>
+    `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.5}" fill="${col}"
+      class="${still ? "" : "gira-sh"}" style="animation-delay:${delay}s"
+      transform="rotate(${rot} ${x} ${y})"/>`;
+
+  const gira = {
+    id: "gira",
+    name: "きんかん竜ギラ",
+    theme: null,
+    rare: true,
+    note: "銀の体に金のリブと赤い縞。片側3枚・計6枚の影の翼、背後に二重の金の輪、まわりに金の欠片。レア枠なので小顔・高密度。",
+    colors: { body: "#b9bcbf", body2: "#cdd0d2", gold: "#f2c500", red: "#d6273c", wing: "#3a3d42", ink: "#2b2f34" },
+    body(state) {
+      const still = state === "break";           // 休憩中は光を止める
+      const G = { body: "#b9bcbf", body2: "#cdd0d2", gold: "#f2c500", gold2: "#ffd83d",
+                  red: "#d6273c", wing: "#3a3d42", wing2: "#4d525a" };
+      return `
+    <style>
+      .gira-halo { transform-box: fill-box; transform-origin: center; animation: giraSpin 22s linear infinite; }
+      .gira-halo2 { transform-box: fill-box; transform-origin: center; animation: giraSpin 32s linear infinite reverse; }
+      .gira-sh { animation: giraTw 2.4s ease-in-out infinite; }
+      @keyframes giraSpin { to { transform: rotate(360deg); } }
+      @keyframes giraTw { 0%, 100% { opacity: .28; } 50% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .gira-halo, .gira-halo2, .gira-sh { animation: none; }
+      }
+    </style>
+    <ellipse cx="60" cy="50" rx="47" ry="47" fill="none" stroke="${G.gold}" stroke-width="2.4"
+             stroke-dasharray="11 8" opacity=".6" class="${still ? "" : "gira-halo"}"/>
+    <ellipse cx="60" cy="50" rx="37" ry="37" fill="none" stroke="${G.gold2}" stroke-width="1.5"
+             stroke-dasharray="6 9" opacity=".5" class="${still ? "" : "gira-halo2"}"/>
+    ${giraWing(33, 26, 0.72, -1, G.wing2)}${giraWing(97, 26, 0.72, 1, G.wing2)}
+    ${giraWing(35, 50, 0.86, -1, G.wing, G.red)}${giraWing(95, 50, 0.86, 1, G.wing, G.red)}
+    ${giraWing(37, 74, 0.64, -1, G.wing2)}${giraWing(93, 74, 0.64, 1, G.wing2)}
+    <ellipse cx="60" cy="73" rx="27" ry="24" fill="${G.body}"/>
+    <ellipse cx="60" cy="77" rx="16" ry="18" fill="${G.body2}"/>
+    <path d="M45 63 q15 5 30 0 M43 74 q17 6 34 0 M46 85 q14 5 28 0"
+          stroke="${G.gold}" stroke-width="4.8" fill="none" stroke-linecap="round"/>
+    <path d="M50 68 q10 3 20 0 M50 79 q10 3 20 0"
+          stroke="${G.red}" stroke-width="3.3" fill="none" stroke-linecap="round"/>
+    ${giraPetals(60, 73, 27, 21, 6, 5.5, 3, G.gold, 204, 336)}
+    ${giraPetals(60, 28, 17, 15, 8, 8.5, 3.6, G.gold, 180, 360)}
+    <ellipse cx="60" cy="28" rx="16" ry="14" fill="${G.body}"/>
+    <path d="M60 15 q-13 1 -14 8 q14 -5 28 0 q-1 -7 -14 -8 z" fill="${G.gold}"/>
+    <ellipse cx="60" cy="21" rx="3.2" ry="2.6" fill="${G.red}"/>
+    ${giraShard(7, 26, 4.2, -25, G.gold, 0, still)}
+    ${giraShard(115, 22, 3.6, 20, G.gold2, 0.5, still)}
+    ${giraShard(121, 56, 3.2, -15, G.gold, 1.1, still)}
+    ${giraShard(5, 60, 3, 35, G.gold2, 1.6, still)}
+    ${giraShard(15, 93, 3.4, 15, G.gold, 0.8, still)}
+    ${giraShard(113, 91, 3, -20, G.gold2, 1.9, still)}
+    ${giraShard(60, 3, 3.6, 0, G.gold2, 1.3, still)}`;
+    },
+    face(state) {
+      if (state === "break") return `
+      <path d="M52 27 q3.6 4 7.2 0" stroke="#2b2f34" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <path d="M61 27 q3.6 4 7.2 0" stroke="#2b2f34" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <path d="M57 37 q3 2 6 0" stroke="#2b2f34" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+      <text x="84" y="14" font-size="12" fill="#f2c500" font-weight="700">z</text>
+      <text x="92" y="5" font-size="9" fill="#ffd83d" font-weight="700">z</text>`;
+      if (state === "work") return `
+      <circle cx="53" cy="29" r="5.6" fill="#fff"/><circle cx="67" cy="29" r="5.6" fill="#fff"/>
+      <circle cx="53.6" cy="30" r="3.1" fill="#f2c500"/><circle cx="67.6" cy="30" r="3.1" fill="#f2c500"/>
+      <circle cx="54.2" cy="30.8" r="1.5" fill="#2b2f34"/><circle cx="68.2" cy="30.8" r="1.5" fill="#2b2f34"/>
+      <path d="M47 23 l8 2.6" stroke="#2b2f34" stroke-width="1.9" stroke-linecap="round"/>
+      <path d="M73 23 l-8 2.6" stroke="#2b2f34" stroke-width="1.9" stroke-linecap="round"/>
+      <path d="M56 38 l8 0" stroke="#2b2f34" stroke-width="1.9" stroke-linecap="round"/>`;
+      if (state === "paused") return `
+      <circle cx="53" cy="29" r="5.8" fill="#fff"/><circle cx="67" cy="29" r="5.8" fill="#fff"/>
+      <circle cx="55" cy="30" r="3.1" fill="#f2c500"/><circle cx="69" cy="30" r="3.1" fill="#f2c500"/>
+      <circle cx="55.6" cy="30.8" r="1.5" fill="#2b2f34"/><circle cx="69.6" cy="30.8" r="1.5" fill="#2b2f34"/>
+      <path d="M56 38 q4 3 8 0" stroke="#2b2f34" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+      return `
+      <circle cx="53" cy="29" r="5.8" fill="#fff"/><circle cx="67" cy="29" r="5.8" fill="#fff"/>
+      <circle cx="53.6" cy="30" r="3.3" fill="#f2c500"/><circle cx="67.6" cy="30" r="3.3" fill="#f2c500"/>
+      <circle cx="54.2" cy="30.8" r="1.6" fill="#2b2f34"/><circle cx="68.2" cy="30.8" r="1.6" fill="#2b2f34"/>
+      <path d="M56 38 q4 3 8 0" stroke="#2b2f34" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+    },
+  };
+
+  const LIST = { mori, shian, kota, mika, gira };
   const STATES = ["idle", "work", "paused", "break"];
 
   const API = {
@@ -766,16 +963,22 @@ function tick() {
   global.MASCOTS = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;
 })(typeof window !== "undefined" ? window : globalThis);
+
 /* MASCOTS-LIB-END */
 
 /* 勉強1時間ごとに仲間が1体ずつ増える */
-const UNLOCK_SEC = 3600;
+/* 何時間目で何体目が仲間になるか（秒）。
+   1体目は最初からいて、2体目=1時間、3体目=2時間、4体目「ミカ」=4時間、5体目「ギン」（レア枠）=7時間。
+   グラフの色が変わる4時間・7時間の節目と合わせている。以降を足すときはここに秒を追記する */
+const UNLOCKS = [0, 1 * 3600, 2 * 3600, 4 * 3600, 7 * 3600];
 function mascotOrder() {
   const themeId = MASCOTS.byTheme(load("englog_theme", "panda"));
   return [themeId, ...MASCOTS.ids.filter((x) => x !== themeId)];
 }
 function mascotCount() {
-  return Math.min(mascotOrder().length, 1 + Math.floor(secByDate(today()) / UNLOCK_SEC));
+  const sec = secByDate(today());
+  const reached = UNLOCKS.filter((u) => sec >= u).length;
+  return Math.min(mascotOrder().length, Math.max(1, reached));
 }
 function renderMascots(state) {
   const el = document.getElementById("mascot");
@@ -783,13 +986,16 @@ function renderMascots(state) {
   const order = mascotOrder();
   const n = mascotCount();
   el.className = "mascot n" + n;
-  el.innerHTML = order.slice(0, n).map((id) => MASCOTS.svg(id, state)).join("");
+  // レア枠は 1.2倍で描く（他のキャラに埋もれないように）
+  el.innerHTML = order.slice(0, n)
+    .map((id) => MASCOTS.svg(id, state, MASCOTS.list[id].rare ? 'class="rare"' : ""))
+    .join("");
   const hint = document.getElementById("mascot-hint");
   if (!hint) return;
-  if (n >= order.length) {
+  if (n >= order.length || n >= UNLOCKS.length) {
     hint.textContent = "仲間ぜんいん集合！";
   } else {
-    const rest = UNLOCK_SEC - (secByDate(today()) % UNLOCK_SEC);
+    const rest = UNLOCKS[n] - secByDate(today());
     hint.textContent = `あと${Math.ceil(rest / 60)}分で「${MASCOTS.list[order[n]].name}」が仲間に`;
   }
 }
@@ -814,12 +1020,12 @@ function paintTimer() {
     ring.style.background = `conic-gradient(var(--steel) 0 0%, var(--bar) 0% 100%)`;
     if (uiMode === "exam") {
       timeEl.textContent = fmtT(examMin * 60);
-      labEl.textContent = `模試モード / ${selTag}`;
+      labEl.textContent = "模試モード";
       btn.textContent = "スタート";
       note.textContent = "設定した時間でカウントダウン。終了すると自動で記録されます";
     } else {
       timeEl.textContent = "25:00";
-      labEl.textContent = `きょう ${pomosToday()}ポモ / ${selTag}`;
+      labEl.textContent = `きょう ${pomosToday()}ポモ`;
       btn.textContent = "スタート";
       note.textContent = "25分たつと自動でログに追加され、5分休憩に入ります";
     }
@@ -830,13 +1036,13 @@ function paintTimer() {
     ring.style.background = `conic-gradient(${arc} 0 ${frac}%, var(--bar) ${frac}% 100%)`;
     timeEl.textContent = fmtT(remaining);
     if (t.mode === "exam") {
-      labEl.textContent = t.paused ? `⏸ 一時停止中 / ${t.tag}` : `模試 ${fmtT(t.total)} / ${t.tag}`;
+      labEl.textContent = t.paused ? "⏸ 一時停止中" : `模試 ${fmtT(t.total)}`;
       btn.textContent = t.paused ? "▶ 再開する" : "⏸ 一時停止";
       note.textContent = t.paused
         ? "カウントは止まっています"
         : "ホームに戻ってもタイマーは動き続けます";
     } else if (t.mode === "work") {
-      labEl.textContent = t.paused ? `⏸ 一時停止中 / ${t.tag}` : `${pomosToday()+1}ポモ目 / ${t.tag}`;
+      labEl.textContent = t.paused ? "⏸ 一時停止中" : `${pomosToday()+1}ポモ目`;
       btn.textContent = t.paused ? "▶ 再開する" : "⏸ 一時停止";
       note.textContent = t.paused
         ? "カウントは止まっています。トイレ休憩どうぞ☕"
@@ -856,13 +1062,13 @@ function renderPlaybar() {
   pb.classList.toggle("brk", !!t && t.mode === "break");
   if (!t) {
     tx.textContent = uiMode === "exam" ? `${fmtT(examMin*60)} 模試タイマー` : "25:00 ポモドーロ";
-    sub.textContent = `タグ: ${selTag}`;
+    sub.textContent = "";
   } else {
     const remaining = remainingSec(t);
     tx.textContent = t.mode === "break"
       ? `${fmtT(remaining)} 休憩中`
       : `${fmtT(remaining)} ${t.paused ? "一時停止中" : (t.mode === "exam" ? "模試" : "実行中")}`;
-    sub.textContent = t.mode === "break" ? "" : t.tag;
+    sub.textContent = "";
   }
 }
 function beep(n) {
@@ -881,14 +1087,12 @@ function beep(n) {
 /* ===== history ===== */
 function setTab(t) {
   histTab = t;
-  ["w","m","t"].forEach(x => document.getElementById("seg-"+x).classList.toggle("on", x === t));
+  ["w","m"].forEach(x => document.getElementById("seg-"+x).classList.toggle("on", x === t));
   renderHistory();
 }
 function renderHistory() {
   const el = document.getElementById("hist-body");
-  if (histTab === "w") el.innerHTML = histWeekHTML();
-  else if (histTab === "m") el.innerHTML = histMonthHTML();
-  else el.innerHTML = histTagHTML();
+  el.innerHTML = histTab === "m" ? histMonthHTML() : histWeekHTML();
 }
 function histWeekHTML() {
   const wk = weekDates(histWeekOff);
@@ -913,15 +1117,9 @@ function histWeekHTML() {
   </div>`;
   const dayHTML = wk.filter(d => secByDate(dstr(d)) > 0).reverse().map(d => {
     const ds = dstr(d);
-    const byTag = {};
-    logs().filter(x => x.d === ds).forEach(x => {
-      byTag[x.tag] = byTag[x.tag] || { n: 0, sec: 0 };
-      byTag[x.tag].n++; byTag[x.tag].sec += x.sec;
-    });
+    const n = logs().filter(x => x.d === ds && x.sec >= WORK).length;
     return `<div class="datehd">${d.getMonth()+1}月${d.getDate()}日（${YOBI[d.getDay()]}）— ${fmtH(secByDate(ds))}</div>` +
-      Object.keys(byTag).map(t =>
-        `<div class="logrow"><span class="nm">${t}</span><span class="ct">${byTag[t].n}回</span><span class="num">${fmtH(byTag[t].sec)}</span></div>`
-      ).join("");
+      `<div class="logrow"><span class="nm">ポモドーロ</span><span class="ct">${n}回</span><span class="num">${fmtH(secByDate(ds))}</span></div>`;
   }).join("");
   return html + (dayHTML || `<div class="empty">この週の記録はありません</div>`);
 }
@@ -955,32 +1153,7 @@ function histMonthHTML() {
       <div class="legend">
         <span>少</span><i style="background:var(--cal1)"></i><i style="background:var(--cal2)"></i><i style="background:var(--cal3)"></i><span>多</span>
       </div>
-    </div>
-    ${monthTagHTML(y, m)}`;
-}
-function monthTagHTML(y, m) {
-  const pre = `${y}-${String(m+1).padStart(2,"0")}-`;
-  const byTag = {};
-  logs().filter(x => x.d.startsWith(pre)).forEach(x => { byTag[x.tag] = (byTag[x.tag] || 0) + x.sec; });
-  const keys = Object.keys(byTag).sort((a,b) => byTag[b]-byTag[a]);
-  if (keys.length === 0) return `<div class="empty">この月の記録はありません</div>`;
-  const max = byTag[keys[0]];
-  return `<div class="datehd">この月のタグ内訳</div>` + keys.map(t =>
-    `<div class="logrow"><span class="nm">${t}</span><div class="tagbar-outer"><div class="tagbar-in" style="width:${Math.round(byTag[t]/max*100)}%"></div></div><span class="num">${fmtH(byTag[t])}</span></div>`
-  ).join("");
-}
-function histTagHTML() {
-  const byTag = {};
-  logs().forEach(x => {
-    byTag[x.tag] = byTag[x.tag] || { n: 0, sec: 0 };
-    byTag[x.tag].n++; byTag[x.tag].sec += x.sec;
-  });
-  const keys = Object.keys(byTag).sort((a,b) => byTag[b].sec - byTag[a].sec);
-  if (keys.length === 0) return `<div class="empty">まだ記録がありません</div>`;
-  const max = byTag[keys[0]].sec;
-  return `<div class="datehd">累計（全期間）</div>` + keys.map(t =>
-    `<div class="logrow"><span class="nm">${t}</span><div class="tagbar-outer"><div class="tagbar-in" style="width:${Math.round(byTag[t].sec/max*100)}%"></div></div><span class="ct">${byTag[t].n}回</span><span class="num" style="margin-left:8px">${fmtH(byTag[t].sec)}</span></div>`
-  ).join("");
+    </div>`;
 }
 async function exportData() {
   const payload = JSON.stringify({ app: "englog", logs: logs(), tags: tags() });
@@ -1001,7 +1174,6 @@ function importData() {
     store(LS_LOGS, d.logs);
     store(LS_TAGS, Array.isArray(d.tags) && d.tags.length ? d.tags : ["単語","リスニング","文法"]);
     backup();
-    selTag = tags()[0];
     renderHistory();
     alert("読み込みました");
   } catch {
@@ -1009,9 +1181,8 @@ function importData() {
   }
 }
 function wipe() {
-  if (confirm("すべての記録とタグを削除します。\n（自動バックアップは残るので「バックアップから復元」で戻せます）\nよろしいですか？")) {
+  if (confirm("すべての記録を削除します。\n（自動バックアップは残るので「バックアップから復元」で戻せます）\nよろしいですか？")) {
     localStorage.removeItem(LS_LOGS); localStorage.removeItem(LS_TAGS); localStorage.removeItem(LS_TIMER);
-    selTag = tags()[0];
     nav("home");
   }
 }
@@ -1026,7 +1197,6 @@ function restoreBackup() {
   if (!confirm(`自動バックアップ（${ws}時点・記録${b.logs.length}件）から復元します。\n今のデータは置き換えられます。よろしいですか？`)) return;
   store(LS_LOGS, b.logs);
   store(LS_TAGS, Array.isArray(b.tags) && b.tags.length ? b.tags : ["単語","リスニング","文法"]);
-  selTag = tags()[0];
   renderHistory();
   alert("復元しました");
 }
@@ -1051,7 +1221,24 @@ function cycleTheme() {
   applyTheme(next);
 }
 
+/* ===== 過去ログの30分換算そろえ（一度きり） =====
+   30分換算を入れる前に完了したポモドーロは 1500秒（25分）で記録されている。
+   ちょうど1500秒のものだけを1800秒に直す。中断は半端な秒数、模試は1800秒以上なので巻き込まない。
+   念のため、直す前のログを englog_backup_pre30 に残す。 */
+function migrate30() {
+  if (load("englog_fix30", false)) return;
+  const all = logs();
+  const hit = all.filter((x) => x.sec === WORK).length;
+  if (hit) {
+    try { store("englog_backup_pre30", { logs: all, ts: Date.now() }); } catch {}
+    all.forEach((x) => { if (x.sec === WORK) x.sec = LOG_UNIT; });
+    store(LS_LOGS, all);
+  }
+  store("englog_fix30", true);
+}
+
 /* ===== boot ===== */
+migrate30();
 applyTheme(THEMES.includes(load("englog_theme", "panda")) ? load("englog_theme", "panda") : "panda");
 setInterval(tick, 500);
 nav("home");
