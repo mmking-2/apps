@@ -137,6 +137,17 @@
   /* マスが増えて縦に伸びすぎないよう、11マス以上は1マスを低くする */
   .pgrid.dense .pgcell { height: 9px; }
 
+  .manual { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .manual summary { font-size: 14px; font-weight: 700; cursor: pointer; }
+  .manual .mnote { font-size: 12px; color: var(--muted); line-height: 1.7; margin: 8px 0 10px; }
+  .manual label { display: flex; align-items: center; justify-content: space-between;
+                  gap: 10px; font-size: 13px; margin-bottom: 8px; }
+  .manual input, .manual select { font: inherit; font-size: 15px; padding: 6px 8px;
+                  border: 1px solid var(--line); border-radius: 8px; background: var(--card);
+                  color: var(--ink); }
+  .manual input[type="number"] { width: 84px; text-align: right; }
+  .manual label span { display: flex; align-items: center; gap: 6px; }
+
   .dots { display: flex; gap: 7px; margin-bottom: 18px; }
   .dot { flex: 1; aspect-ratio: 0.82; border-radius: 11px; background: var(--card);
     border: 1.5px solid var(--line); display: flex; flex-direction: column;
@@ -411,7 +422,19 @@
     </div>
     <div id="hist-body"></div>
     <div style="flex:1"></div>
-    <button class="btn ghost small" onclick="exportData()">データを書き出す（コピー）</button>
+    <details class="manual">
+      <summary>手で記録を足す</summary>
+      <p class="mnote">消してしまった記録を戻すとき用。<b>足すだけ</b>なので、今ある記録は消えません。1ポモ＝30分。</p>
+      <label>日付<input type="date" id="add-date"></label>
+      <label>時間<span><input type="number" id="add-min" min="1" max="600" step="5" value="30">分</span></label>
+      <label>種類<select id="add-kind">
+        <option value="pomo">ポモドーロ</option>
+        <option value="exam">模試</option>
+        <option value="part">その他</option>
+      </select></label>
+      <button class="btn ghost small" onclick="addManual()">この内容で足す</button>
+    </details>
+    <button class="btn ghost small" style="margin-top:8px" onclick="exportData()">データを書き出す（コピー）</button>
     <button class="btn ghost small" style="margin-top:8px" onclick="importData()">データを読み込む（貼り付け）</button>
     <button class="btn ghost small" style="margin-top:8px" onclick="restoreBackup()">バックアップから復元</button>
     <button class="btn danger small" style="margin-top:8px" onclick="wipe()">全データを削除</button>
@@ -426,6 +449,7 @@ const WORK = 25 * 60, BREAK = 5 * 60;
 /* ポモドーロを1回やりきったときに記録する時間。
    実測は25分だが、休憩5分ぶんを込みにして30分単位で集計する（本人の希望） */
 const LOG_UNIT = 30 * 60;
+const APP_VER = "v13";
 const LS_MODE = "englog_mode", LS_EXAM = "englog_exam";
 const EXAM_PRESETS = [30, 45, 60, 75, 90, 120];
 const YOBI = ["日","月","火","水","木","金","土"];
@@ -458,13 +482,64 @@ function weekDates(off = 0) {
   return [...Array(7)].map((_, i) => { const d = new Date(mon); d.setDate(mon.getDate()+i); return d; });
 }
 const secByDate = (ds) => logs().filter(x => x.d === ds).reduce((a, x) => a + x.sec, 0);
-const pomosToday = () => logs().filter(x => x.d === today() && x.sec >= WORK).length;
+/* ログの種類。kind を持たない古いログは秒数から推定する。
+   完了ポモは 1500（旧）か 1800（30分換算後）ちょうど。模試はそれ以外の長いもの。
+   ポモの中断は必ず 1500 未満なので「中断ぶん」に落ちる。 */
+function logKind(x) {
+  if (x.kind) return x.kind;
+  if (x.sec === WORK || x.sec === LOG_UNIT) return "pomo";
+  return x.sec >= WORK ? "exam" : "part";
+}
+const logsOn = (ds) => logs().filter(x => x.d === ds);
+const pomosToday = () => logsOn(today()).filter(x => logKind(x) === "pomo").length;
 
-function addLog(sec) {
+/* 週グラフのマス数。1マス=30分。ポモと模試の合計時間で決める。
+   （中断の端数はこれまで通りマスにしない）
+   これで45分の模試も90分の模試も、長さに応じてマスに乗る。 */
+const unitSecByDate = (ds) => logsOn(ds)
+  .filter(x => { const k = logKind(x); return k === "pomo" || k === "exam"; })
+  .reduce((a, x) => a + x.sec, 0);
+const cellsByDate = (ds) => Math.floor(unitSecByDate(ds) / LOG_UNIT);
+
+function addLog(sec, kind) {
   const all = logs();
-  all.push({ d: today(), sec: Math.round(sec) });
+  all.push({ d: today(), sec: Math.round(sec), kind: kind || "pomo" });
   store(LS_LOGS, all);
   backup();
+}
+
+/* 日付を指定して1件足す（手で戻すとき用）。既存のログには手を触れない */
+function addLogOn(ds, sec, kind) {
+  const all = logs();
+  all.push({ d: ds, sec: Math.round(sec), kind: kind || "pomo" });
+  store(LS_LOGS, all);
+  backup();
+}
+function addManual() {
+  const ds = document.getElementById("add-date").value || today();
+  const min = Number(document.getElementById("add-min").value);
+  const kind = document.getElementById("add-kind").value;
+  if (!(min > 0)) { alert("時間を分で入れてください。"); return; }
+  const nm = kind === "exam" ? "模試" : kind === "part" ? "その他" : "ポモドーロ";
+  if (!confirm(`${ds} に「${nm} ${min}分」を足します。\n今ある記録は消えません。よろしいですか？`)) return;
+  addLogOn(ds, min * 60, kind);
+  renderHome(); renderHistory(); renderTimerScreen();
+  alert(`${nm} ${min}分 を足しました。`);
+}
+
+/* その日の内訳を、種類ごとの行に分ける */
+function logRowsHTML(ds) {
+  const ls = logsOn(ds);
+  const pick = (k) => ls.filter(x => logKind(x) === k);
+  const sum = (a) => a.reduce((t, x) => t + x.sec, 0);
+  const row = (nm, ct, sec) =>
+    `<div class="logrow"><span class="nm">${nm}</span><span class="ct">${ct}</span><span class="num">${fmtH(sec)}</span></div>`;
+  const p = pick("pomo"), e = pick("exam"), q = pick("part");
+  let h = "";
+  if (p.length) h += row("ポモドーロ", `${p.length}回`, sum(p));
+  if (e.length) h += row("模試", `${e.length}回`, sum(e));
+  if (q.length) h += row("中断ぶん", `${q.length}件`, sum(q));
+  return h;
 }
 function backup() {
   try { store(LS_BAK, { logs: logs(), tags: tags(), ts: Date.now() }); } catch {}
@@ -490,7 +565,7 @@ function renderHome() {
   const weekTotal = secs.reduce((a, b) => a + b, 0);
   document.getElementById("today-total").innerHTML =
     `${fmtH(secByDate(today()))}<small> ｜ 今週 ${fmtH(weekTotal)}</small>`;
-  const pomos = wk.map(d => logs().filter(x => x.d === dstr(d) && x.sec >= WORK).length);
+  const pomos = wk.map(d => cellsByDate(dstr(d)));
   // 次に色が変わる段までは常に表示して、到達前から目標に見えるようにする
   const maxP = Math.max(0, ...pomos);
   const rows = Math.max(6, maxP, maxP >= 12 ? 16 : maxP >= 8 ? 13 : 9);
@@ -513,11 +588,9 @@ function renderHome() {
     const mark = isToday ? "今日" : done ? "✓" : d.getDate();
     return `<div class="${cls}"><span class="d1">${YOBI[d.getDay()]}</span><span class="d2 num">${mark}</span></div>`;
   }).join("");
-  const tdLogs = logs().filter(x => x.d === today());
-  const tdSec = tdLogs.reduce((a, x) => a + x.sec, 0);
-  document.getElementById("today-logs").innerHTML = tdLogs.length === 0
+  document.getElementById("today-logs").innerHTML = logsOn(today()).length === 0
     ? `<div class="empty">まだ記録がありません。<br>下のバーからポモドーロをはじめよう。</div>`
-    : `<div class="logrow"><span class="nm">ポモドーロ</span><span class="ct">${pomosToday()}回</span><span class="num">${fmtH(tdSec)}</span></div>`;
+    : logRowsHTML(today());
   renderPlaybar();
 }
 
@@ -586,8 +659,14 @@ function stopAction() {
   const t = timerState();
   if (!t || (t.mode !== "work" && t.mode !== "exam")) return;
   const elapsed = t.total - remainingSec(t);
-  if (elapsed >= 60) {
-    if (confirm(`ここまでの ${fmtMin(elapsed)} を記録して終了しますか？\n（キャンセル＝記録せず破棄）`)) addLog(elapsed);
+  /* ポモを最後までやりきってから「中断する」を押した場合（アプリを閉じている間に
+     25分が終わっていて、開いた直後に押したときなど）も、実測25分ではなく30分で記録する。
+     ここが 25分ぶんしか増えない原因だった。 */
+  if (t.mode === "work" && elapsed >= WORK) {
+    addLog(LOG_UNIT, "pomo");
+  } else if (elapsed >= 60) {
+    const kind = t.mode === "exam" ? "exam" : "part";
+    if (confirm(`ここまでの ${fmtMin(elapsed)} を記録して終了しますか？\n（キャンセル＝記録せず破棄）`)) addLog(elapsed, kind);
   }
   localStorage.removeItem(LS_TIMER);
   renderTimerScreen(); renderPlaybar();
@@ -596,11 +675,11 @@ function tick() {
   const t = timerState();
   if (t && !t.paused && Date.now() >= t.endTs) {
     if (t.mode === "work") {
-      addLog(LOG_UNIT);   // 実測25分 → 30分として記録
+      addLog(LOG_UNIT, "pomo");   // 実測25分 → 30分として記録
       store(LS_TIMER, { mode: "break", endTs: Date.now() + BREAK*1000, total: BREAK });
       beep(2);
     } else if (t.mode === "exam") {
-      addLog(t.total);
+      addLog(t.total, "exam");
       localStorage.removeItem(LS_TIMER);
       beep(3);
     } else {
@@ -966,17 +1045,19 @@ function tick() {
 
 /* MASCOTS-LIB-END */
 
-/* 勉強1時間ごとに仲間が1体ずつ増える */
-/* 何時間目で何体目が仲間になるか（秒）。
-   1体目は最初からいて、2体目=1時間、3体目=2時間、4体目「ミカ」=4時間、5体目「ギン」（レア枠）=7時間。
-   グラフの色が変わる4時間・7時間の節目と合わせている。以降を足すときはここに秒を追記する */
-const UNLOCKS = [0, 1 * 3600, 2 * 3600, 4 * 3600, 7 * 3600];
+/* 仲間が増える基準は「その週の合計勉強時間」。月曜の朝にリセットされる。
+   （以前は「その日の合計」だったので、日付が変わると毎朝1体に戻っていた）
+   何時間目で何体目が仲間になるか（秒）。1体目は最初からいる。
+   ここの数字を変えれば増えるペースを調整できる。以降を足すときは末尾に秒を追記する */
+const UNLOCKS = [0, 2 * 3600, 5 * 3600, 10 * 3600, 15 * 3600];
+/* 今週（月曜はじまり）の合計。マスコットの解放判定に使う */
+const weekSec = () => weekDates(0).reduce((a, d) => a + secByDate(dstr(d)), 0);
 function mascotOrder() {
   const themeId = MASCOTS.byTheme(load("englog_theme", "panda"));
   return [themeId, ...MASCOTS.ids.filter((x) => x !== themeId)];
 }
 function mascotCount() {
-  const sec = secByDate(today());
+  const sec = weekSec();
   const reached = UNLOCKS.filter((u) => sec >= u).length;
   return Math.min(mascotOrder().length, Math.max(1, reached));
 }
@@ -995,8 +1076,8 @@ function renderMascots(state) {
   if (n >= order.length || n >= UNLOCKS.length) {
     hint.textContent = "仲間ぜんいん集合！";
   } else {
-    const rest = UNLOCKS[n] - secByDate(today());
-    hint.textContent = `あと${Math.ceil(rest / 60)}分で「${MASCOTS.list[order[n]].name}」が仲間に`;
+    const rest = UNLOCKS[n] - weekSec();
+    hint.textContent = `今週あと${fmtH(rest)}で「${MASCOTS.list[order[n]].name}」が仲間に`;
   }
 }
 
@@ -1092,7 +1173,8 @@ function setTab(t) {
 }
 function renderHistory() {
   const el = document.getElementById("hist-body");
-  el.innerHTML = histTab === "m" ? histMonthHTML() : histWeekHTML();
+  el.innerHTML = (histTab === "m" ? histMonthHTML() : histWeekHTML()) +
+    `<div class="empty" style="padding:16px 0 2px;font-size:11px">ENGLOG ${APP_VER}</div>`;
 }
 function histWeekHTML() {
   const wk = weekDates(histWeekOff);
@@ -1117,9 +1199,8 @@ function histWeekHTML() {
   </div>`;
   const dayHTML = wk.filter(d => secByDate(dstr(d)) > 0).reverse().map(d => {
     const ds = dstr(d);
-    const n = logs().filter(x => x.d === ds && x.sec >= WORK).length;
     return `<div class="datehd">${d.getMonth()+1}月${d.getDate()}日（${YOBI[d.getDay()]}）— ${fmtH(secByDate(ds))}</div>` +
-      `<div class="logrow"><span class="nm">ポモドーロ</span><span class="ct">${n}回</span><span class="num">${fmtH(secByDate(ds))}</span></div>`;
+      logRowsHTML(ds);
   }).join("");
   return html + (dayHTML || `<div class="empty">この週の記録はありません</div>`);
 }
@@ -1239,6 +1320,7 @@ function migrate30() {
 
 /* ===== boot ===== */
 migrate30();
+{ const el = document.getElementById("add-date"); if (el) el.value = today(); }
 applyTheme(THEMES.includes(load("englog_theme", "panda")) ? load("englog_theme", "panda") : "panda");
 setInterval(tick, 500);
 nav("home");
